@@ -15,6 +15,7 @@
 #include "sfs-api.h"
 
 #include <errno.h>
+#include <math.h>
 #include <pthread.h>
 #include <signal.h>
 #include <stdint.h>
@@ -27,11 +28,6 @@
 
 #define DISK_NAME "test.img"
 #define CONC_DISK "test_conc.img"
-
-/* Forward declarations for perf helpers; score_perf_against_baseline is
-   defined in a later part of this file (added in a subsequent task). */
-static double run_perf_benchmark_raw(void);
-static int score_perf_against_baseline(double student_ops);
 
 /* ------------------------------------------------------------------ */
 /*  Per-trace check infrastructure                                     */
@@ -680,7 +676,7 @@ static double read_baseline_ops(void)
     double ops = -1.0;
     if (fscanf(f, "%lf", &ops) != 1) ops = -1.0;
     fclose(f);
-    if (ops <= 0.0) return -1.0;
+    if (!isfinite(ops) || ops <= 0.0) return -1.0;
     return ops;
 }
 
@@ -857,6 +853,11 @@ static int run_trace_with_timeout(const char *id, trace_fn fn)
     if (pid == 0)
     {
         int ok = fn();
+        /* Flush stdio before _exit: CHECK() failures and other diagnostic
+           output can sit in the child's buffers when stdout/stderr are
+           block-buffered (e.g. redirected to a file). */
+        fflush(stdout);
+        fflush(stderr);
         _exit(ok ? 0 : 1);
     }
 
@@ -1008,6 +1009,10 @@ int main(int argc, char *argv[])
         else if (pid == 0)
         {
             int score = run_perf_benchmark();
+            /* Flush stdio so the child's "Student throughput", "Baseline",
+               and "Ratio" lines survive output redirection. */
+            fflush(stdout);
+            fflush(stderr);
             _exit(score);
         }
         else
