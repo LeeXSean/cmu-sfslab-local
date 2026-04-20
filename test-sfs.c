@@ -16,6 +16,7 @@
 
 #include <errno.h>
 #include <pthread.h>
+#include <signal.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -834,13 +835,82 @@ struct trace_entry
     trace_fn fn;
 };
 
+#define TRACE_TIMEOUT_SEC 30
+
+/* Run `fn` in a forked child with a TRACE_TIMEOUT_SEC wall-clock limit.
+   Child exit code:
+     0 = trace passed
+     1 = trace failed (a CHECK inside it failed and set trace_ok = 0)
+   Parent handles SIGKILL-on-timeout and reports TIMEOUT in stderr.
+   Returns 1 if the trace passed, 0 otherwise. */
+static int run_trace_with_timeout(const char *id, trace_fn fn)
+{
+    fflush(stdout);
+    fflush(stderr);
+
+    pid_t pid = fork();
+    if (pid < 0)
+    {
+        fprintf(stderr, "fork() failed: %s\n", strerror(errno));
+        return 0;
+    }
+    if (pid == 0)
+    {
+        int ok = fn();
+        _exit(ok ? 0 : 1);
+    }
+
+    /* Parent: poll waitpid up to TRACE_TIMEOUT_SEC seconds. */
+    int elapsed_ms = 0;
+    const int step_ms = 100;
+    int status = 0;
+    while (elapsed_ms < TRACE_TIMEOUT_SEC * 1000)
+    {
+        pid_t r = waitpid(pid, &status, WNOHANG);
+        if (r == pid) break;
+        if (r < 0)
+        {
+            fprintf(stderr, "waitpid: %s\n", strerror(errno));
+            return 0;
+        }
+        struct timespec ts = { .tv_sec = 0, .tv_nsec = step_ms * 1000000L };
+        nanosleep(&ts, NULL);
+        elapsed_ms += step_ms;
+    }
+
+    if (elapsed_ms >= TRACE_TIMEOUT_SEC * 1000)
+    {
+        fprintf(stderr, "       -> TIMEOUT: trace %s exceeded %d seconds "
+                        "(deadlock suspected); killing child\n",
+                id, TRACE_TIMEOUT_SEC);
+        kill(pid, SIGKILL);
+        waitpid(pid, &status, 0);
+        unlink(CONC_DISK);
+        return 0;
+    }
+
+    if (WIFEXITED(status))
+        return WEXITSTATUS(status) == 0 ? 1 : 0;
+    if (WIFSIGNALED(status))
+    {
+        fprintf(stderr, "       -> CRASH: trace %s killed by signal %d\n",
+                id, WTERMSIG(status));
+        return 0;
+    }
+    return 0;
+}
+
 static int run_category(const char *label, struct trace_entry *traces, int n)
 {
     printf("\nCategory %s:\n", label);
+    /* Only concurrent-correctness traces need the fork+timeout wrapper. */
+    int use_timeout = (label[0] == 'C');
     int passed = 0;
     for (int i = 0; i < n; i++)
     {
-        int ok = traces[i].fn();
+        int ok = use_timeout
+                 ? run_trace_with_timeout(traces[i].id, traces[i].fn)
+                 : traces[i].fn();
         passed += ok;
         printf("  %s %-24s %s  [%d/1]\n", traces[i].id, traces[i].name,
                ok ? "PASS" : "FAIL", ok);
@@ -925,7 +995,61 @@ int main(int argc, char *argv[])
     }
     else
     {
-        perf = run_perf_benchmark();
+        /* Perf benchmark also needs deadlock protection — 60s budget
+           (longer than a Category C trace because slower machines may
+           legitimately take more time on the full workload). */
+        fflush(stdout); fflush(stderr);
+        pid_t pid = fork();
+        if (pid < 0)
+        {
+            fprintf(stderr, "fork() for perf failed: %s\n", strerror(errno));
+            perf = 0;
+        }
+        else if (pid == 0)
+        {
+            int score = run_perf_benchmark();
+            _exit(score);
+        }
+        else
+        {
+            int status = 0;
+            int elapsed_ms = 0;
+            const int step_ms = 100;
+            const int perf_budget_ms = 60 * 1000;
+            while (elapsed_ms < perf_budget_ms)
+            {
+                pid_t r = waitpid(pid, &status, WNOHANG);
+                if (r == pid) break;
+                if (r < 0)
+                {
+                    fprintf(stderr, "waitpid(perf): %s\n", strerror(errno));
+                    break;
+                }
+                struct timespec ts = {
+                    .tv_sec = 0, .tv_nsec = step_ms * 1000000L
+                };
+                nanosleep(&ts, NULL);
+                elapsed_ms += step_ms;
+            }
+            if (elapsed_ms >= perf_budget_ms)
+            {
+                fprintf(stderr,
+                        "  TIMEOUT: perf benchmark exceeded %ds; killing\n",
+                        perf_budget_ms / 1000);
+                kill(pid, SIGKILL);
+                waitpid(pid, &status, 0);
+                unlink(PERF_DISK);
+                perf = 0;
+            }
+            else if (WIFEXITED(status))
+            {
+                perf = WEXITSTATUS(status);
+            }
+            else
+            {
+                perf = 0;
+            }
+        }
         printf("  Score: %d/10\n", perf);
     }
 
