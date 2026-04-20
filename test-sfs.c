@@ -15,6 +15,7 @@
 #include "sfs-api.h"
 
 #include <errno.h>
+#include <limits.h>
 #include <math.h>
 #include <pthread.h>
 #include <signal.h>
@@ -22,6 +23,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
@@ -667,18 +669,70 @@ static double elapsed_sec(struct timespec *start, struct timespec *end)
            (double)(end->tv_nsec - start->tv_nsec) / 1e9;
 }
 
-/* Read baseline ops/sec from .perf_baseline.
-   Returns the number, or -1.0 if the file is missing/unreadable/empty. */
-static double read_baseline_ops(void)
+/* Build the preferred path to .perf_baseline: next to the currently running
+   executable (via /proc/self/exe), so `./test-sfs` still finds the file when
+   invoked from a different cwd. Writes at most `cap` bytes into `out` and
+   returns 0 on success, -1 if the path did not fit. Callers should try a
+   plain "./.perf_baseline" fallback if the exe-relative file does not exist. */
+static int resolve_baseline_path(char *out, size_t cap)
 {
-    FILE *f = fopen(".perf_baseline", "r");
-    if (!f) return -1.0;
+    char exe[PATH_MAX];
+    ssize_t n = readlink("/proc/self/exe", exe, sizeof(exe) - 1);
+    if (n > 0 && (size_t)n < sizeof(exe))
+    {
+        exe[n] = '\0';
+        char *slash = strrchr(exe, '/');
+        if (slash)
+        {
+            *slash = '\0';
+            int k = snprintf(out, cap, "%s/.perf_baseline", exe);
+            if (k > 0 && (size_t)k < cap) return 0;
+        }
+    }
+    int k = snprintf(out, cap, ".perf_baseline");
+    return (k > 0 && (size_t)k < cap) ? 0 : -1;
+}
+
+struct baseline_info
+{
+    double ops;
+    time_t mtime;                  /* 0 if unavailable */
+    char   path[PATH_MAX];
+};
+
+/* Populate `info` from .perf_baseline. Tries the exe-relative path first,
+   then falls back to "./.perf_baseline". Returns 0 on success, -1 if the
+   file is missing, unreadable, or holds a non-finite / non-positive value. */
+static int load_baseline(struct baseline_info *info)
+{
+    info->ops = -1.0;
+    info->mtime = 0;
+    info->path[0] = '\0';
+
+    if (resolve_baseline_path(info->path, sizeof(info->path)) != 0)
+        return -1;
+
+    FILE *f = fopen(info->path, "r");
+    if (!f && strcmp(info->path, ".perf_baseline") != 0)
+    {
+        snprintf(info->path, sizeof(info->path), ".perf_baseline");
+        f = fopen(info->path, "r");
+    }
+    if (!f) return -1;
+
     double ops = -1.0;
     if (fscanf(f, "%lf", &ops) != 1) ops = -1.0;
     fclose(f);
-    if (!isfinite(ops) || ops <= 0.0) return -1.0;
-    return ops;
+    if (!isfinite(ops) || ops <= 0.0) return -1;
+
+    struct stat st;
+    if (stat(info->path, &st) == 0) info->mtime = st.st_mtime;
+
+    info->ops = ops;
+    return 0;
 }
+
+#define BASELINE_STALE_DAYS 30
 
 /* Score student's ops/sec against the machine-calibrated baseline.
    ratio = student_ops / baseline_ops; thresholds mirror CMU's.
@@ -686,8 +740,8 @@ static double read_baseline_ops(void)
    with a warning so the grader still produces a number. */
 static int score_perf_against_baseline(double student_ops)
 {
-    double baseline = read_baseline_ops();
-    if (baseline < 0.0)
+    struct baseline_info bi;
+    if (load_baseline(&bi) != 0)
     {
         printf("  (.perf_baseline missing -- run `make baseline` to calibrate; "
                "using legacy absolute thresholds)\n");
@@ -699,9 +753,19 @@ static int score_perf_against_baseline(double student_ops)
         return 10;
     }
 
-    double ratio = student_ops / baseline;
-    printf("  Baseline throughput: %.0f ops/sec (from .perf_baseline)\n",
-           baseline);
+    double ratio = student_ops / bi.ops;
+    printf("  Baseline throughput: %.0f ops/sec (from %s)\n",
+           bi.ops, bi.path);
+    if (bi.mtime > 0)
+    {
+        double age_days = difftime(time(NULL), bi.mtime) / 86400.0;
+        if (age_days >= (double)BASELINE_STALE_DAYS)
+            printf("  Baseline age: %.0f days -- stale, "
+                   "re-run `make baseline` for a fair comparison\n",
+                   age_days);
+        else
+            printf("  Baseline age: %.1f days\n", age_days);
+    }
     printf("  Ratio (student / baseline): %.2fx\n", ratio);
 
     if (ratio >= 0.90) return 10;
