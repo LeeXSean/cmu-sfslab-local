@@ -15,17 +15,19 @@ A self-contained, local-runnable version of CMU 15-213 / 15-513's
 cmu-sfslab-local/
 ├── README.md                        # this file
 ├── sfslab-local-handout/            # the handout, unpacked
-│   ├── SFS_Lab_Writeup.md           #   full lab writeup (what to do)
-│   ├── Makefile
+│   ├── SFS_Lab_Writeup.md           #   full lab writeup (start here)
+│   ├── sfs-disk.c                   #   *** the file you modify ***
 │   ├── sfs-api.h                    #   API spec — read, do not modify
 │   ├── sfs-disk.h                   #   on-disk structures
-│   ├── sfs-disk.c                   #   *** the file you modify ***
 │   ├── sfs-support.c                #   mmap / block I/O — do not modify
 │   ├── sfs-baseline-ref.c           #   reference impl for perf calibration
 │   ├── sfs-fsck.c                   #   disk consistency checker
-│   └── test-sfs.c                   #   local autograder (all categories)
+│   ├── test-sfs.c                   #   local autograder (all categories)
+│   └── Makefile
 └── sfslab-local-handout.tar.gz      # the same handout, packaged
 ```
+
+The in-directory file list matches `SFS_Lab_Writeup.md` §2.1.
 
 Use either the directory (for in-place work) or the tarball (for a clean
 copy to share with someone else). They contain byte-identical sources.
@@ -82,53 +84,6 @@ starts producing a ratio against the reference implementation.
 
 Full details, including how to interpret the scoreboard and how the
 race detector is wired in, live in `sfslab-local-handout/SFS_Lab_Writeup.md`.
-
----
-
-## What This Port Fixes vs. a Naive Local Grader
-
-Two problems that a simple "copy the traces and run them" approach would
-have, and how this repo handles them:
-
-### 1. Student deadlocks must not hang the grader
-
-Category C traces spawn worker threads and call `pthread_join`. A buggy
-student lock strategy can deadlock — with a blocking join, the grader
-then sits there forever and the student has to `Ctrl+C` to recover, losing
-their partial score.
-
-**Fix:** each Category C trace and the perf benchmark run in a **forked
-child** with a wall-clock budget (30s / 60s). The parent polls
-`waitpid(WNOHANG)` on a 100 ms cadence. On timeout, it `SIGKILL`s the
-child, cleans up disk images, and scores the trace as 0. The grader is
-guaranteed to finish in bounded time.
-
-### 2. Performance thresholds must not be machine-dependent
-
-CMU's autolab is calibrated on course-provided hardware, so they can
-hardcode thresholds like "10000 ops/sec → 9/10". On your laptop the same
-student code might score anywhere from 3/10 to 10/10 with zero change in
-quality, purely because of CPU differences.
-
-**Fix:** ship a **reference implementation** (`sfs-baseline-ref.c` — a
-byte-identical copy of the handout `sfs-disk.c` wrapped with one global
-`pthread_mutex`) and build it into `test-sfs-baseline`. `make baseline`
-runs that binary's perf workload once, caches the ops/sec to
-`.perf_baseline`, and the student grader scores by the ratio
-`student_ops / baseline_ops`. A student who matches the reference scores
-~1.0×; real reader-writer or per-file locking pushes well above 1.0×.
-
-If `.perf_baseline` is missing, the grader falls back to legacy absolute
-thresholds with a warning. If it's older than 30 days, the grader prints
-a staleness notice suggesting re-calibration.
-
-### Smaller robustness fixes
-
-- `.perf_baseline` is resolved via `/proc/self/exe`, so `test-sfs` finds
-  it regardless of the current working directory.
-- Fork children call `fflush(stdout); fflush(stderr);` before `_exit`, so
-  diagnostic lines survive output redirection (`./test-sfs > log.txt`).
-- The baseline loader rejects NaN/Inf, not just non-positive values.
 
 ---
 

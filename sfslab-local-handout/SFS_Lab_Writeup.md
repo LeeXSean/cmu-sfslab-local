@@ -45,9 +45,10 @@ separate users.
 | `sfs-api.h` | API specification header. Read this carefully — do not modify. |
 | `sfs-disk.h` | On-disk data structures and constants. Read-only (unless tackling optional challenges). |
 | `sfs-support.c` | Low-level disk/mmap support routines. Provided — do not modify. |
+| `sfs-baseline-ref.c` | Naive reference implementation (handout code + one global mutex). Used by `make baseline` to calibrate the perf score for your machine. Do not modify. |
 | `sfs-fsck.c` | Filesystem consistency checker. Run it on disk images to find structural bugs. |
 | `test-sfs.c` | Standalone test driver and autograder. Exercises all API functions, includes TSan race detection. |
-| `Makefile` | Build system. Builds `sfs-fsck` and `test-sfs`. |
+| `Makefile` | Build system. Builds `sfs-fsck`, `test-sfs`, and `test-sfs-baseline`. |
 
 ### 2.2 Building
 
