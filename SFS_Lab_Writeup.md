@@ -1,0 +1,360 @@
+# SFS Lab: Writing a Multithreaded Filesystem
+
+> **Based on CMU 15-213/15-513 (Summer 2024)**
+> Adapted for local development on Ubuntu 18.04
+>
+> **Disclaimer:** All original course materials, including the SFS filesystem
+> codebase and lab design, are the intellectual property of Carnegie Mellon
+> University and the 15-213/15-513 course staff. This adaptation is a personal
+> self-study project by an enthusiast who deeply admires CMU's systems
+> curriculum but has no opportunity to take the course on campus. No
+> affiliation with CMU is implied. If this repository infringes on any
+> rights, please open an issue and it will be taken down immediately.
+
+---
+
+## 1 Introduction
+
+A file system is a data structure that the operating system uses to store, maintain, and refer to
+meaningful data on the disk, and conversely to derive usable information from the raw data on the
+disk. File systems allow programs to interact with data as abstract files, leaving the cumbersome
+work of putting that data onto the physical disk to lower-level calls. File systems are also simple
+but powerful tools for organization (with folders, linking, etc.) and security (with permissions).
+
+In this lab, we provide you with a very basic file system, which does not implement folders,
+linking, or permissions. In the Shark File System, as distributed in this lab, you may only create
+and delete files, and read or write to them.
+
+The first portion of this lab deals with file system capabilities. We ask you to implement a few
+functions that introduce new abilities of the file system, allowing users to see and augment the
+position of file descriptors, and to change file names with a single call.
+
+The next portion of this lab asks you to improve the file system's performance and safety.
+Currently, there is nothing to prevent two simultaneous calls to the file system from overwriting
+or otherwise conflicting with each other. We would like for you to prevent conflicts like these
+from happening, while still allowing for concurrent and fast access to the file system for
+separate users.
+
+## 2 Getting Started
+
+### 2.1 Files
+
+| File | Description |
+|------|-------------|
+| `sfs-disk.c` | **The file you will be modifying.** Contains the SFS implementation. |
+| `sfs-api.h` | API specification header. Read this carefully — do not modify. |
+| `sfs-disk.h` | On-disk data structures and constants. Read-only (unless tackling optional challenges). |
+| `sfs-support.c` | Low-level disk/mmap support routines. Provided — do not modify. |
+| `sfs-fsck.c` | Filesystem consistency checker. Run it on disk images to find structural bugs. |
+| `test-sfs.c` | Standalone test driver and autograder. Exercises all API functions, includes TSan race detection. |
+| `Makefile` | Build system. Builds `sfs-fsck` and `test-sfs`. |
+
+### 2.2 Building
+
+On Ubuntu 18.04 (or any Linux with GCC):
+
+```bash
+make
+```
+
+This produces two executables:
+
+- `sfs-fsck` — filesystem consistency checker
+- `test-sfs` — test driver for your implementation
+
+### 2.3 Running Tests
+
+```bash
+./test-sfs
+```
+
+The test driver will exercise all SFS API functions and report pass/fail for each test.
+Before you implement anything, you should see failures for `sfs_getpos`, `sfs_seek`, and
+`sfs_rename`. As you implement each function, the corresponding tests will start passing.
+
+You can also check a disk image for structural consistency:
+
+```bash
+./sfs-fsck [-v] <disk-image>
+```
+
+## 3 Overview
+
+Your first item of business is to implement the `sfs_getpos` function. This function should just
+return the position of a file descriptor within its file. This should be relatively straightforward,
+but is a good warm-up to familiarize yourself with the file system codebase before moving on to
+the rest of the assignment. The principal files of interest are `sfs-disk.c`, `sfs-disk.h`, and
+`sfs-api.h`.
+
+Next, you should implement the `sfs_seek` function. This function should move the file
+descriptor's position forwards or backwards by the value passed into the argument. This will
+require not just accessing data stored in the file system structure like you did for `sfs_getpos`,
+but changing it as well.
+
+After that, only `sfs_rename` remains unimplemented. This will also require changing data
+stored in the file system structure.
+
+Once you have implemented these three functions, it is time to move on to implementing
+concurrency. We suggest approaching this in three gradations.
+
+The first order of business is to make the system thread-safe in a very coarse way, only trying
+to ensure correctness of accesses. This can be done by simply locking the entire file system for
+any kind of access, and then unlocking once the request has been satisfied.
+
+After making the file system thread-safe, you can start to think of ways to increase concurrent
+accesses. There are two aspects to this: reading and writing, and separate files.
+
+When reading, no data is being changed besides the current file descriptor's position, so
+multiple file descriptors may read at the same time without any concern for overwriting each
+other, whereas writing requires solitary access.
+
+With separate files, accesses should not ever overlap, since the files have to be separate to
+start with. So, reading or writing on one file need not prevent someone else from doing the same
+with another file.
+
+Which aspect you start with is up to you, but we would like for you to try to implement both.
+If you can think of ways to improve concurrency even more, please go further!
+
+## 4 The SFS Specification
+
+You should only need to edit the `sfs-disk.c` file; however, some designs may need to modify
+`sfs-disk.h`. The current top-level functions implemented in `sfs-disk.c`, accessible via
+`sfs-api.h`, are:
+
+### 4.1 Provided Functions
+
+- **`int sfs_format(const char *diskName, size_t diskSize)`**
+  Creates an SFS disk image on file `diskName`, creating it if it does not exist, allocating
+  `diskSize` bytes for the image, and then mounts this disk to be used for all subsequent
+  sfs-disk file routines.
+
+- **`int sfs_mount(const char *diskName)`**
+  Mounts the disk image, loading the state of a previously used file system.
+
+- **`int sfs_unmount(void)`**
+  Unmounts the current disk image. If any files are open, this will fail.
+
+- **`int sfs_open(const char *fileName)`**
+  Opens the file with name `fileName`, creating it if it does not exist, and returning a file
+  descriptor.
+
+- **`void sfs_close(int fd)`**
+  Closes the given file descriptor. This call can't fail; it can only be inert for a file
+  descriptor that doesn't exist.
+
+- **`ssize_t sfs_write(int fd, const char *buf, size_t len)`**
+  Writes up to `len` bytes of the string `buf` to the file descriptor given. On success,
+  returns the number of bytes written. This call updates the position of `fd`.
+
+- **`ssize_t sfs_read(int fd, char *buf, size_t len)`**
+  Reads up to `len` bytes from the given file descriptor, placing them into `buf`. On success,
+  returns the number of bytes read. This call updates the position of `fd`.
+
+- **`int sfs_remove(const char *name)`**
+  Attempts to remove the file `name`.
+
+- **`int sfs_list(sfs_list_cookie *cookie, char filename_out[], size_t filename_space)`**
+  Iteratively places file names into `filename_out[]` with each call, until there are no more
+  files. Returns 0 upon successful retrieval, 1 when it has no more filenames to write out,
+  and possibly a negative error code.
+
+### 4.2 Functions You Must Implement
+
+There are three functions in `sfs-disk.c` that are currently unimplemented. It is your first
+order of business to implement these functions.
+
+- **`ssize_t sfs_getpos(int fd)`**
+  Should return the position of the file descriptor given, in bytes. Specifically, it should
+  return the index of the byte we are on, where the first byte of the file is 0, the second
+  is 1, and so on until the end of the file.
+
+- **`ssize_t sfs_seek(int fd, ssize_t delta)`**
+  Should move `fd`'s position by `delta`. If given the output `loc` from an earlier `getpos`
+  call, `sfs_seek(fd, loc - sfs_getpos(fd))` should return `fd` to the position where the
+  file descriptor was at that earlier call. `seek` should track with reads and writes to the
+  file descriptor, according to how many bytes have been read or written. If the requested
+  motion would put `fd` in a negative position, it should stop at 0. If the requested motion
+  moves past the end of the file, it should stop at the end of the file.
+
+- **`int sfs_rename(const char *old_name, const char *new_name)`**
+  Should rename the file of name `old_name` to `new_name`. If `new_name` already exists,
+  then delete and replace it.
+
+For more details, such as expected return values and error codes, refer to the specifications
+given in `sfs-api.h`. In addition to `sfs-disk.c` and `sfs-api.h`, `sfs-disk.h` will also be
+worth reading and referencing as it defines some of the high-level design choices of the file
+system.
+
+## 5 Testing
+
+### 5.1 Autograder
+
+The primary testing tool is `test-sfs`, a standalone C autograder that mirrors the original CMU
+grading structure. It runs categorized test traces and prints a scoreboard:
+
+```bash
+make test-sfs
+./test-sfs
+```
+
+The autograder is organized into the same categories as the original:
+
+| Category | Traces | Points | What it tests |
+|----------|--------|--------|---------------|
+| A (Feature Tests) | A00–A04 | 5 | format/mount, open/close/rw, getpos, seek, rename |
+| B (Sequential Correctness) | B00–B02 | 3 | remove/list, multi-block seek + cross-boundary read, edge cases + getpos tracking |
+| C (Concurrent Correctness) | C00–C02 | 3 | separate-file writes, shared reads, r/w mix + storm |
+| Performance | benchmark | 10 | Concurrent throughput (only runs if correctness = 11/11) |
+| Style | — | 4 | Manual self-review (not auto-graded) |
+
+Sample output (before implementing anything):
+
+```
+========================================
+        SFS Lab Autograder
+========================================
+
+Category A (Feature Tests):
+  A00 format_mount            PASS  [1/1]
+  A01 open_close_rw           PASS  [1/1]
+  A02 getpos                  FAIL  [0/1]
+  A03 seek                    FAIL  [0/1]
+  A04 rename                  FAIL  [0/1]
+  Subtotal: 2/5
+
+Category B (Sequential Correctness):
+  B00 remove_list             PASS  [1/1]
+  B01 multi_block_seek        FAIL  [0/1]
+  B02 edge_cases              FAIL  [0/1]
+  Subtotal: 1/3
+
+Category C (Concurrent Correctness):
+  C00 separate_files          PASS  [1/1]
+  C01 read_same_file          PASS  [1/1]
+  C02 rw_mix_storm            PASS  [1/1]
+  Subtotal: 3/3
+
+Race Detection (ThreadSanitizer):
+  DATA RACE DETECTED — Category C score set to 0
+
+Correctness: 3/11
+
+Performance:
+  (skipped — correctness tests must all pass first)
+  Score: 0/10
+
+----------------------------------------
+  Total: 3/21  (+ up to 4 style pts)
+========================================
+```
+
+**Note on Category C:** After running the C traces, the autograder automatically compiles
+a ThreadSanitizer build and re-runs the concurrent tests. If TSan detects any data races,
+the Category C score is set to 0 — even if the traces appeared to pass. This mirrors the
+original CMU ConTech-based race detection. If your system does not support
+`-fsanitize=thread`, the TSan check is skipped without penalty.
+
+The performance benchmark uses 8 threads each doing 100 open/write/seek/read/close cycles.
+Scoring thresholds:
+
+| ops/sec | Score |
+|---------|-------|
+| < 1000 | 0/10 |
+| 1000–3000 | 3/10 (coarse lock) |
+| 3000–6000 | 5/10 |
+| 6000–10000 | 7/10 |
+| 10000–15000 | 9/10 |
+| > 15000 | 10/10 (fine-grained locking) |
+
+### 5.2 sfs-fsck
+
+The filesystem consistency checker `sfs-fsck` can verify the structural integrity of a disk
+image. This is useful for debugging: if your implementation corrupts the on-disk data structures,
+`sfs-fsck` will tell you what went wrong.
+
+```bash
+./sfs-fsck test.img
+./sfs-fsck -v test.img    # verbose output
+```
+
+It checks for:
+
+- Mislabeled blocks
+- Invalid directory entries
+- File length disagreeing with number of allocated blocks
+- Inconsistent doubly linked lists
+- Circular linked lists
+- Blocks on more than one list simultaneously
+- Orphaned blocks (not on any list)
+
+### 5.3 Concurrency Testing
+
+The autograder automatically compiles a ThreadSanitizer build and re-runs the Category C
+traces after the normal test run. If TSan detects data races, the C score is set to 0.
+
+If you want to run TSan manually for more detailed output:
+
+```bash
+gcc -std=c11 -g -fsanitize=thread -pthread -D_GNU_SOURCE=1 \
+    -o test-sfs-tsan test-sfs.c sfs-disk.c sfs-support.c
+./test-sfs-tsan --tsan-only
+```
+
+ThreadSanitizer will print the exact locations of any data races it detects. This is the
+local equivalent of the ConTech-based `raceTool` used in the original CMU lab.
+
+## 6 Concurrency Guide
+
+Once the three basic functions are implemented, the next challenge is making the file system
+thread-safe. Here is a suggested progression:
+
+### 6.1 Coarse-Grained Locking
+
+Start by adding a single global mutex that protects the entire file system. Lock it at the
+beginning of every API function and unlock it at the end. This ensures correctness but allows
+no concurrency.
+
+### 6.2 Reader-Writer Locks
+
+Reading does not modify file data (only the file descriptor's position), so multiple readers can
+proceed concurrently. Use `pthread_rwlock_t` to allow concurrent reads while serializing writes.
+
+### 6.3 Per-File Locking
+
+Accesses to separate files should not block each other. Consider a lock per open file (or per
+directory entry) so that operations on different files can proceed in parallel.
+
+### 6.4 Tips
+
+- Start coarse, verify correctness, then refine.
+- Use `sfs-fsck` after concurrent tests to verify disk image integrity.
+- ThreadSanitizer (`-fsanitize=thread`) is your best friend for finding races.
+- Be careful with operations that touch global state: the free list, the directory, and the
+  open file tables.
+
+## Appendix: FAQ
+
+### "No space left on device"
+
+Each test sizes the disk appropriately for correct execution. If your implementation has an error
+or a race, it may end up using additional space and thereby cause an operation to fail with
+`ENOSPC`.
+
+### How do I debug disk corruption?
+
+Run `sfs-fsck -v` on your disk image. It will report exactly which blocks are mislinked,
+orphaned, or mislabeled. You can also add `printf` statements in `sfs-disk.c` to trace
+block allocation and deallocation.
+
+### What if `sfs_seek` goes past the end of the file?
+
+Per the specification in `sfs-api.h`, if seeking would move the position past the end of the
+file, it should be clamped to the file size. If it would go negative, clamp to 0. This is
+different from the Unix `lseek` system call.
+
+### Does `sfs_rename` need to be atomic?
+
+Yes. If `new_name` already exists, the replacement should be atomic — there should be no gap
+in which a concurrent thread can observe `new_name` not existing. For the single-threaded
+implementation this is straightforward; for the concurrent version, you will need appropriate
+locking.
