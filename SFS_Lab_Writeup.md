@@ -57,10 +57,22 @@ On Ubuntu 18.04 (or any Linux with GCC):
 make
 ```
 
-This produces two executables:
+This produces three executables:
 
 - `sfs-fsck` — filesystem consistency checker
 - `test-sfs` — test driver for your implementation
+- `test-sfs-baseline` — reference implementation (handout code + one global mutex) used to calibrate the perf score for your machine; see §5.1.
+
+Before running the autograder for the first time on a new machine, calibrate
+the performance baseline:
+
+```bash
+make baseline
+```
+
+This runs `test-sfs-baseline` once and caches its throughput to `.perf_baseline`.
+Your perf score is then a ratio of your implementation's throughput to this
+baseline, so results are comparable across laptops.
 
 ### 2.3 Running Tests
 
@@ -254,17 +266,28 @@ the Category C score is set to 0 — even if the traces appeared to pass. This m
 original CMU ConTech-based race detection. If your system does not support
 `-fsanitize=thread`, the TSan check is skipped without penalty.
 
-The performance benchmark uses 8 threads each doing 100 open/write/seek/read/close cycles.
-Scoring thresholds:
+The performance benchmark uses 8 threads each doing 100 open/write/seek/read/close
+cycles. Raw ops/sec is machine-dependent, so the score is instead a ratio against
+a shipped reference implementation (the handout code wrapped with a single global
+mutex) measured on the same machine via `make baseline`. Let
+`ratio = student_ops / baseline_ops`:
 
-| ops/sec | Score |
-|---------|-------|
-| < 1000 | 0/10 |
-| 1000–3000 | 3/10 (coarse lock) |
-| 3000–6000 | 5/10 |
-| 6000–10000 | 7/10 |
-| 10000–15000 | 9/10 |
-| > 15000 | 10/10 (fine-grained locking) |
+| ratio | Score | Interpretation |
+|-------|-------|----------------|
+| ≥ 0.90 | 10/10 | At or near fine-grained locking |
+| ≥ 0.70 | 9/10  | Clearly better than coarse lock |
+| ≥ 0.50 | 7/10  | Moderate improvement |
+| ≥ 0.30 | 5/10  | Small improvement |
+| ≥ 0.15 | 3/10  | Roughly coarse-lock territory |
+| < 0.15 | 0/10  | Slower than the naive baseline |
+
+If `.perf_baseline` is missing, the grader falls back to the legacy absolute
+ops/sec thresholds and prints a warning telling you to run `make baseline`.
+
+**Deadlock protection:** Each Category C trace runs in a forked child with a
+30-second wall-clock budget; the perf benchmark gets 60 seconds. If a child
+exceeds its budget (e.g. from a deadlock), the parent `SIGKILL`s it and scores
+that trace/benchmark as 0. You will not need Ctrl+C to recover.
 
 ### 5.2 sfs-fsck
 
