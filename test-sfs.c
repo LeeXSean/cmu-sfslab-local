@@ -27,6 +27,11 @@
 #define DISK_NAME "test.img"
 #define CONC_DISK "test_conc.img"
 
+/* Forward declarations for perf helpers; score_perf_against_baseline is
+   defined in a later part of this file (added in a subsequent task). */
+static double run_perf_benchmark_raw(void);
+static int score_perf_against_baseline(double student_ops);
+
 /* ------------------------------------------------------------------ */
 /*  Per-trace check infrastructure                                     */
 /* ------------------------------------------------------------------ */
@@ -665,7 +670,52 @@ static double elapsed_sec(struct timespec *start, struct timespec *end)
            (double)(end->tv_nsec - start->tv_nsec) / 1e9;
 }
 
-static int run_perf_benchmark(void)
+/* Read baseline ops/sec from .perf_baseline.
+   Returns the number, or -1.0 if the file is missing/unreadable/empty. */
+static double read_baseline_ops(void)
+{
+    FILE *f = fopen(".perf_baseline", "r");
+    if (!f) return -1.0;
+    double ops = -1.0;
+    if (fscanf(f, "%lf", &ops) != 1) ops = -1.0;
+    fclose(f);
+    if (ops <= 0.0) return -1.0;
+    return ops;
+}
+
+/* Score student's ops/sec against the machine-calibrated baseline.
+   ratio = student_ops / baseline_ops; thresholds mirror CMU's.
+   If .perf_baseline is missing, fall back to legacy absolute thresholds
+   with a warning so the grader still produces a number. */
+static int score_perf_against_baseline(double student_ops)
+{
+    double baseline = read_baseline_ops();
+    if (baseline < 0.0)
+    {
+        printf("  (.perf_baseline missing -- run `make baseline` to calibrate; "
+               "using legacy absolute thresholds)\n");
+        if (student_ops < 1000)  return 0;
+        if (student_ops < 3000)  return 3;
+        if (student_ops < 6000)  return 5;
+        if (student_ops < 10000) return 7;
+        if (student_ops < 15000) return 9;
+        return 10;
+    }
+
+    double ratio = student_ops / baseline;
+    printf("  Baseline throughput: %.0f ops/sec (from .perf_baseline)\n",
+           baseline);
+    printf("  Ratio (student / baseline): %.2fx\n", ratio);
+
+    if (ratio >= 0.90) return 10;
+    if (ratio >= 0.70) return 9;
+    if (ratio >= 0.50) return 7;
+    if (ratio >= 0.30) return 5;
+    if (ratio >= 0.15) return 3;
+    return 0;
+}
+
+static double run_perf_benchmark_raw(void)
 {
     sfs_format(PERF_DISK, disk_size());
 
@@ -689,26 +739,16 @@ static int run_perf_benchmark(void)
 
     double secs = elapsed_sec(&t0, &t1);
     int total_ops = PERF_THREADS * PERF_OPS_PER_THREAD;
-    double ops_per_sec = (double)total_ops / secs;
+    return (double)total_ops / secs;
+}
 
-    printf("  Throughput: %.0f ops/sec (%.3f sec for %d ops)\n",
-           ops_per_sec, secs, total_ops);
-
-    int score;
-    if (ops_per_sec < 1000)
-        score = 0;
-    else if (ops_per_sec < 3000)
-        score = 3;
-    else if (ops_per_sec < 6000)
-        score = 5;
-    else if (ops_per_sec < 10000)
-        score = 7;
-    else if (ops_per_sec < 15000)
-        score = 9;
-    else
-        score = 10;
-
-    return score;
+static int run_perf_benchmark(void)
+{
+    double ops_per_sec = run_perf_benchmark_raw();
+    int total_ops = PERF_THREADS * PERF_OPS_PER_THREAD;
+    printf("  Student throughput: %.0f ops/sec (%d total ops)\n",
+           ops_per_sec, total_ops);
+    return score_perf_against_baseline(ops_per_sec);
 }
 
 /* ================================================================== */
@@ -826,6 +866,16 @@ int main(int argc, char *argv[])
             c += cat_c[i].fn();
         unlink(DISK_NAME);
         return (c == 3) ? 0 : 66;
+    }
+
+    /* --perf-only: used by test-sfs-baseline to print baseline ops/sec.
+       Writes a single decimal number (no scoring, no banners) to stdout. */
+    if (argc > 1 && strcmp(argv[1], "--perf-only") == 0)
+    {
+        double baseline_ops = run_perf_benchmark_raw();
+        printf("%.2f\n", baseline_ops);
+        unlink(DISK_NAME);
+        return 0;
     }
 
     printf("========================================\n");
