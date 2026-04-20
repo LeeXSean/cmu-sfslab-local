@@ -77,6 +77,8 @@ baseline, so results are comparable across laptops.
 
 ### 2.3 Running Tests
 
+Assuming you have already run `make` and `make baseline` (§2.2):
+
 ```bash
 ./test-sfs
 ```
@@ -206,7 +208,8 @@ The primary testing tool is `test-sfs`, a standalone C autograder that mirrors t
 grading structure. It runs categorized test traces and prints a scoreboard:
 
 ```bash
-make test-sfs
+make              # builds sfs-fsck, test-sfs, test-sfs-baseline
+make baseline     # one-time per-machine perf calibration (see §2.2)
 ./test-sfs
 ```
 
