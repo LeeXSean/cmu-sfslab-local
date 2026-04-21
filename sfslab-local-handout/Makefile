@@ -40,12 +40,13 @@ baseline: test-sfs-baseline
 	@sort -n .perf_baseline.tmp \
 	  | awk -v n=$(BASELINE_RUNS) 'NR==int((n+1)/2){print; exit}' \
 	  > .perf_baseline
+	@printf 'SFS_DISK_DIR=%s\n' "$${SFS_DISK_DIR:-(unset)}" >> .perf_baseline
 	@awk 'NR==1{min=$$1; max=$$1} \
 	      {if($$1<min)min=$$1; if($$1>max)max=$$1} \
 	      END{printf "  spread: min=%.2f max=%.2f (%.1f%% of midpoint)\n", \
 	          min, max, 200*(max-min)/(max+min)}' .perf_baseline.tmp
 	@rm -f .perf_baseline.tmp
-	@echo "Baseline (median): $$(cat .perf_baseline) ops/sec  ->  .perf_baseline"
+	@echo "Baseline (median): $$(head -1 .perf_baseline) ops/sec  ->  .perf_baseline"
 .PHONY: baseline
 
 clean:

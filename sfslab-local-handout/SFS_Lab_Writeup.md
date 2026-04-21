@@ -391,7 +391,10 @@ still see the "spread exceeds 20%" warning, pick one (easiest first):
    The autograder prints `Disk images redirected via SFS_DISK_DIR: /tmp` to
    stderr when the variable is set, so you can confirm it took effect. On
    a typical Docker-on-Windows setup this alone drops spread from 40–70%
-   into the single digits.
+   into the single digits. The value is recorded into `.perf_baseline`; if
+   your calibration and scored run disagree on `SFS_DISK_DIR`, the scorer
+   prints a loud warning and tells you to recalibrate — otherwise the ratio
+   would be measuring two different filesystems.
 2. **Raise the sample count.** `make baseline BASELINE_RUNS=11` tightens
    calibration at the cost of a longer one-time setup. For the scored run,
    bump `PERF_SAMPLE_RUNS` in `test-sfs.c` and rebuild.

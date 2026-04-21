@@ -778,6 +778,7 @@ struct baseline_info
     double ops;
     time_t mtime;                  /* 0 if unavailable */
     char   path[PATH_MAX];
+    char   disk_dir[PATH_MAX];     /* SFS_DISK_DIR at calibration time; "(unset)" if absent */
 };
 
 /* Populate `info` from .perf_baseline. Tries the exe-relative path first,
@@ -788,6 +789,7 @@ static int load_baseline(struct baseline_info *info)
     info->ops = -1.0;
     info->mtime = 0;
     info->path[0] = '\0';
+    snprintf(info->disk_dir, sizeof(info->disk_dir), "(unset)");
 
     if (resolve_baseline_path(info->path, sizeof(info->path)) != 0)
         return -1;
@@ -800,8 +802,30 @@ static int load_baseline(struct baseline_info *info)
     }
     if (!f) return -1;
 
+    /* .perf_baseline format:
+         line 1: ops/sec as a decimal number
+         line 2 (optional, added 2026-04): "SFS_DISK_DIR=<value>"
+       Old one-line files from earlier baseline builds still parse. */
+    char line[PATH_MAX + 64];
     double ops = -1.0;
-    if (fscanf(f, "%lf", &ops) != 1) ops = -1.0;
+    if (fgets(line, sizeof(line), f) == NULL ||
+        sscanf(line, "%lf", &ops) != 1)
+    {
+        fclose(f);
+        return -1;
+    }
+
+    while (fgets(line, sizeof(line), f))
+    {
+        line[strcspn(line, "\r\n")] = '\0';
+        const char *prefix = "SFS_DISK_DIR=";
+        size_t plen = strlen(prefix);
+        if (strncmp(line, prefix, plen) == 0)
+        {
+            snprintf(info->disk_dir, sizeof(info->disk_dir), "%s", line + plen);
+            break;
+        }
+    }
     fclose(f);
     if (!isfinite(ops) || ops <= 0.0) return -1;
 
@@ -846,6 +870,23 @@ static int score_perf_against_baseline(double student_ops)
         else
             printf("  Baseline age: %.1f days\n", age_days);
     }
+
+    /* Guard against baseline / scored-run environment mismatch: if the
+       calibration ran with a different SFS_DISK_DIR, the numerator and
+       denominator are measuring different filesystems and the ratio lies. */
+    const char *cur_dir = getenv("SFS_DISK_DIR");
+    if (!cur_dir || !*cur_dir) cur_dir = "(unset)";
+    if (strcmp(cur_dir, bi.disk_dir) != 0)
+    {
+        printf("  WARNING: SFS_DISK_DIR differs between calibration and "
+               "scored run:\n");
+        printf("    baseline calibrated with SFS_DISK_DIR=%s\n", bi.disk_dir);
+        printf("    scored run uses          SFS_DISK_DIR=%s\n", cur_dir);
+        printf("    Ratio below is unreliable -- recalibrate with "
+               "`make baseline`\n");
+        printf("    using the same SFS_DISK_DIR value, or unset both.\n");
+    }
+
     printf("  Ratio (student / baseline): %.2fx\n", ratio);
 
     if (ratio >= 0.90) return 10;
