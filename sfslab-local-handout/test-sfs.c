@@ -15,10 +15,13 @@
 #include "sfs-api.h"
 
 #include <errno.h>
+#include <fcntl.h>
 #include <limits.h>
 #include <math.h>
+#include <poll.h>
 #include <pthread.h>
 #include <signal.h>
+#include <stdatomic.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -35,18 +38,62 @@
 /*  Per-trace check infrastructure                                     */
 /* ------------------------------------------------------------------ */
 
-static int trace_ok;
+/* Cap per-trace FAIL detail; surplus fails counted but not printed.
+   Mutable so -v can raise it to effectively unlimited. */
+#define TRACE_FAIL_DETAIL_DEFAULT 3
 
-#define CHECK(cond, fmt, ...)                                                  \
+static int trace_ok;
+static _Atomic int trace_fail_count;   /* atomic: C traces increment from pthreads */
+static int quiet_mode;                 /* -q: suppress all FAIL detail output */
+static int trace_fail_limit = TRACE_FAIL_DETAIL_DEFAULT;  /* -v bumps to INT_MAX */
+static FILE *check_stream;             /* where CHECK writes FAIL diagnostics */
+
+/* Build the full "       -> FAIL ... \n" line into a local buffer, then emit
+   with a single fputs so concurrent threads writing to the same FILE (e.g.
+   the pipe back to the parent in forked C traces) can't interleave each
+   other's lines.  Pipe writes of <= PIPE_BUF bytes are atomic on Linux;
+   512 bytes is well within that. */
+#define CHECK(cond, ...)                                                       \
     do                                                                         \
     {                                                                          \
         if (!(cond))                                                           \
         {                                                                      \
-            fprintf(stderr, "       -> FAIL [%s:%d]: " fmt "\n",               \
-                    __FILE__, __LINE__, ##__VA_ARGS__);                         \
             trace_ok = 0;                                                      \
+            int _seq = atomic_fetch_add_explicit(&trace_fail_count, 1,         \
+                                                 memory_order_relaxed);        \
+            if (!quiet_mode && _seq < trace_fail_limit)                 \
+            {                                                                  \
+                char _lb[512];                                                 \
+                int _k = snprintf(_lb, sizeof _lb,                             \
+                                  "       -> FAIL [%s:%d]: ",                  \
+                                  __FILE__, __LINE__);                         \
+                if (_k < 0) _k = 0;                                            \
+                if ((size_t)_k < sizeof _lb)                                   \
+                    _k += snprintf(_lb + _k, sizeof _lb - (size_t)_k,          \
+                                   __VA_ARGS__);                               \
+                if (_k < 0 || (size_t)_k >= sizeof _lb - 1)                    \
+                    _k = (int)sizeof _lb - 2;                                  \
+                _lb[_k] = '\n';                                                \
+                _lb[_k + 1] = '\0';                                            \
+                FILE *_cs = check_stream ? check_stream : stderr;              \
+                fputs(_lb, _cs);                                               \
+                fflush(_cs);                                                   \
+            }                                                                  \
         }                                                                      \
     } while (0)
+
+static void trace_fail_tail(FILE *out)
+{
+    if (quiet_mode) return;
+    int total = atomic_load_explicit(&trace_fail_count, memory_order_relaxed);
+    int extra = total - trace_fail_limit;
+    if (extra > 0)
+    {
+        fprintf(out, "       -> (... %d more fail%s suppressed)\n",
+                extra, extra == 1 ? "" : "s");
+        fflush(out);
+    }
+}
 
 static size_t disk_size(void)
 {
@@ -870,11 +917,7 @@ static int run_tsan_check(void)
     if (race_found)
     {
         printf("  DATA RACE DETECTED — Category C score set to 0\n");
-        printf("  Run with TSan manually for details:\n");
-        printf("    gcc -std=c11 -g -fsanitize=thread -pthread -D_GNU_SOURCE=1 "
-               "\\\n");
-        printf("        -o test-sfs-tsan test-sfs.c sfs-disk.c sfs-support.c\n");
-        printf("    ./test-sfs-tsan --tsan-only\n");
+        printf("  Race stacks were suppressed; SFS_Lab_Writeup.md shows how to rerun TSan to print them.\n");
         return 0;
     }
 
@@ -897,69 +940,164 @@ struct trace_entry
 
 #define TRACE_TIMEOUT_SEC 30
 
+/* Append 'n' bytes from 'src' to a dynamically-grown buffer whose state is
+   held in the three out-params pbuf, pcap, plen.  Silently drops the data
+   on allocation failure. */
+static void capture_append(char **pbuf, size_t *pcap, size_t *plen,
+                           const char *src, size_t n)
+{
+    if (*plen + n > *pcap)
+    {
+        size_t nc = *pcap ? *pcap : 4096;
+        while (nc < *plen + n) nc *= 2;
+        char *nb = realloc(*pbuf, nc);
+        if (!nb) return;
+        *pbuf = nb;
+        *pcap = nc;
+    }
+    memcpy(*pbuf + *plen, src, n);
+    *plen += n;
+}
+
 /* Run `fn` in a forked child with a TRACE_TIMEOUT_SEC wall-clock limit.
    Child exit code:
      0 = trace passed
      1 = trace failed (a CHECK inside it failed and set trace_ok = 0)
-   Parent handles SIGKILL-on-timeout and reports TIMEOUT in stderr.
+
+   The child's stderr is redirected into a pipe so the parent can append
+   the captured FAIL lines to *out_buf (grown with capture_append). This
+   lets run_category print the summary line BEFORE the FAIL details, same
+   as the memstream path for A/B traces. TIMEOUT/CRASH diagnostics are
+   appended to the capture too, so they share the same ordering rules.
    Returns 1 if the trace passed, 0 otherwise. */
-static int run_trace_with_timeout(const char *id, trace_fn fn)
+static int run_trace_with_timeout(const char *id, trace_fn fn,
+                                  char **out_buf, size_t *out_len)
 {
+    *out_buf = NULL;
+    *out_len = 0;
+    size_t cap = 0;
+
     fflush(stdout);
     fflush(stderr);
+
+    int pfd[2];
+    if (pipe(pfd) < 0)
+    {
+        fprintf(stderr, "pipe() failed: %s\n", strerror(errno));
+        return 0;
+    }
 
     pid_t pid = fork();
     if (pid < 0)
     {
+        close(pfd[0]); close(pfd[1]);
         fprintf(stderr, "fork() failed: %s\n", strerror(errno));
         return 0;
     }
     if (pid == 0)
     {
+        close(pfd[0]);
+        if (dup2(pfd[1], STDERR_FILENO) < 0) _exit(2);
+        close(pfd[1]);
+        /* Line-buffer stderr so CHECK's single fputs flushes out immediately
+           and pipe writes stay atomic (each <= PIPE_BUF). */
+        setvbuf(stderr, NULL, _IOLBF, 0);
         int ok = fn();
-        /* Flush stdio before _exit: CHECK() failures and other diagnostic
-           output can sit in the child's buffers when stdout/stderr are
-           block-buffered (e.g. redirected to a file). */
+        trace_fail_tail(stderr);
         fflush(stdout);
         fflush(stderr);
         _exit(ok ? 0 : 1);
     }
 
-    /* Parent: poll waitpid up to TRACE_TIMEOUT_SEC seconds. */
+    /* Parent: drain pipe while polling for child exit. */
+    close(pfd[1]);
+    int flags = fcntl(pfd[0], F_GETFL);
+    if (flags >= 0) fcntl(pfd[0], F_SETFL, flags | O_NONBLOCK);
+
     int elapsed_ms = 0;
     const int step_ms = 100;
     int status = 0;
-    while (elapsed_ms < TRACE_TIMEOUT_SEC * 1000)
+    int timed_out = 0;
+
+    for (;;)
     {
+        /* Drain whatever data is currently in the pipe. */
+        char tmp[4096];
+        for (;;)
+        {
+            ssize_t n = read(pfd[0], tmp, sizeof tmp);
+            if (n > 0)
+                capture_append(out_buf, &cap, out_len, tmp, (size_t)n);
+            else if (n == 0)
+                break;  /* EOF: child closed write end */
+            else if (errno == EAGAIN || errno == EWOULDBLOCK)
+                break;
+            else
+                break;
+        }
+
         pid_t r = waitpid(pid, &status, WNOHANG);
         if (r == pid) break;
         if (r < 0)
         {
             fprintf(stderr, "waitpid: %s\n", strerror(errno));
+            close(pfd[0]);
             return 0;
         }
-        struct timespec ts = { .tv_sec = 0, .tv_nsec = step_ms * 1000000L };
-        nanosleep(&ts, NULL);
+        if (elapsed_ms >= TRACE_TIMEOUT_SEC * 1000)
+        {
+            timed_out = 1;
+            break;
+        }
+
+        /* Sleep up to step_ms, but wake early if pipe becomes readable. */
+        struct pollfd pf = { .fd = pfd[0], .events = POLLIN };
+        poll(&pf, 1, step_ms);
         elapsed_ms += step_ms;
     }
 
-    if (elapsed_ms >= TRACE_TIMEOUT_SEC * 1000)
+    if (timed_out)
     {
-        fprintf(stderr, "       -> TIMEOUT: trace %s exceeded %d seconds "
-                        "(deadlock suspected); killing child\n",
-                id, TRACE_TIMEOUT_SEC);
         kill(pid, SIGKILL);
         waitpid(pid, &status, 0);
         unlink(CONC_DISK);
+        /* Drain anything the child managed to emit before the kill. */
+        char tmp2[4096];
+        for (;;)
+        {
+            ssize_t n = read(pfd[0], tmp2, sizeof tmp2);
+            if (n <= 0) break;
+            capture_append(out_buf, &cap, out_len, tmp2, (size_t)n);
+        }
+        char msg[160];
+        int m = snprintf(msg, sizeof msg,
+                         "       -> TIMEOUT: trace %s exceeded %d seconds "
+                         "(deadlock suspected); killed\n",
+                         id, TRACE_TIMEOUT_SEC);
+        if (m > 0) capture_append(out_buf, &cap, out_len, msg, (size_t)m);
+        close(pfd[0]);
         return 0;
     }
+
+    /* Final drain after child exit (EOF expected). */
+    char tmp[4096];
+    for (;;)
+    {
+        ssize_t n = read(pfd[0], tmp, sizeof tmp);
+        if (n <= 0) break;
+        capture_append(out_buf, &cap, out_len, tmp, (size_t)n);
+    }
+    close(pfd[0]);
 
     if (WIFEXITED(status))
         return WEXITSTATUS(status) == 0 ? 1 : 0;
     if (WIFSIGNALED(status))
     {
-        fprintf(stderr, "       -> CRASH: trace %s killed by signal %d\n",
-                id, WTERMSIG(status));
+        char msg[96];
+        int m = snprintf(msg, sizeof msg,
+                         "       -> CRASH: trace %s killed by signal %d\n",
+                         id, WTERMSIG(status));
+        if (m > 0) capture_append(out_buf, &cap, out_len, msg, (size_t)m);
         return 0;
     }
     return 0;
@@ -973,12 +1111,36 @@ static int run_category(const char *label, struct trace_entry *traces, int n)
     int passed = 0;
     for (int i = 0; i < n; i++)
     {
-        int ok = use_timeout
-                 ? run_trace_with_timeout(traces[i].id, traces[i].fn)
-                 : traces[i].fn();
+        int ok;
+        char *buf = NULL;
+        size_t buflen = 0;
+        FILE *ms = NULL;
+
+        atomic_store_explicit(&trace_fail_count, 0, memory_order_relaxed);
+        if (use_timeout)
+        {
+            /* Forked child's stderr is captured via pipe; the returned buf
+               holds FAIL details (and TIMEOUT/CRASH if any) for the parent
+               to print after the summary line, same ordering as A/B. */
+            ok = run_trace_with_timeout(traces[i].id, traces[i].fn,
+                                        &buf, &buflen);
+        }
+        else
+        {
+            ms = open_memstream(&buf, &buflen);
+            check_stream = ms ? ms : stderr;
+            ok = traces[i].fn();
+            trace_fail_tail(check_stream);
+            check_stream = stderr;
+            if (ms) fclose(ms);
+        }
         passed += ok;
         printf("  %s %-24s %s  [%d/1]\n", traces[i].id, traces[i].name,
                ok ? "PASS" : "FAIL", ok);
+        fflush(stdout);
+        if (buf && buflen > 0) fwrite(buf, 1, buflen, stderr);
+        fflush(stderr);
+        free(buf);
     }
     printf("  Subtotal: %d/%d\n", passed, n);
     return passed;
@@ -986,10 +1148,25 @@ static int run_category(const char *label, struct trace_entry *traces, int n)
 
 int main(int argc, char *argv[])
 {
-    /* When invoked with --tsan-only, run only the C traces and exit.
-       TSan will report races via its own runtime; exit code 66 signals
-       that the C traces themselves failed. */
-    if (argc > 1 && strcmp(argv[1], "--tsan-only") == 0)
+    int mode_tsan_only = 0;
+    int mode_perf_only = 0;
+    for (int i = 1; i < argc; i++)
+    {
+        if (strcmp(argv[i], "-q") == 0 || strcmp(argv[i], "--quiet") == 0)
+            quiet_mode = 1;
+        else if (strcmp(argv[i], "-v") == 0 || strcmp(argv[i], "--verbose") == 0)
+            trace_fail_limit = INT_MAX;
+        else if (strcmp(argv[i], "--tsan-only") == 0)
+            mode_tsan_only = 1;
+        else if (strcmp(argv[i], "--perf-only") == 0)
+            mode_perf_only = 1;
+        else
+            fprintf(stderr, "warning: unknown argument '%s' (ignored)\n", argv[i]);
+    }
+
+    /* --tsan-only: run only the C traces. TSan reports races via its own
+       runtime; exit code 66 signals the C traces themselves failed. */
+    if (mode_tsan_only)
     {
         struct trace_entry cat_c[] = {
             {"C00", "separate_files", trace_C00},
@@ -1005,7 +1182,7 @@ int main(int argc, char *argv[])
 
     /* --perf-only: used by test-sfs-baseline to print baseline ops/sec.
        Writes a single decimal number (no scoring, no banners) to stdout. */
-    if (argc > 1 && strcmp(argv[1], "--perf-only") == 0)
+    if (mode_perf_only)
     {
         double baseline_ops = run_perf_benchmark_raw();
         printf("%.2f\n", baseline_ops);

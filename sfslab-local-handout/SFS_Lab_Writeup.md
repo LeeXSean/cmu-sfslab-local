@@ -264,6 +264,20 @@ Performance:
 ========================================
 ```
 
+**Output verbosity:** FAIL diagnostics print grouped under the trace
+they belong to — the PASS/FAIL summary line always comes first, then any
+FAIL detail for that trace, then the next trace. To keep a broken
+implementation from flooding the screen, only the first 3 FAIL lines per
+trace are shown; the rest are collapsed into `(... N more fails
+suppressed)`.
+
+- `./test-sfs -q` (`--quiet`) suppresses all FAIL detail — useful when
+  you only want the scoreboard.
+- `./test-sfs -v` (`--verbose`) raises the cap to unlimited.
+
+Flags can appear in any order and combine freely with `--tsan-only` and
+`--perf-only`.
+
 **Note on Category C:** After running the C traces, the autograder automatically compiles
 a ThreadSanitizer build and re-runs the concurrent tests. If TSan detects any data races,
 the Category C score is set to 0 — even if the traces appeared to pass. This mirrors the

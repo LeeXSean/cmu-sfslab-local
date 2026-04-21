@@ -68,7 +68,7 @@ cd sfslab-local-handout
 
 make                  # builds sfs-fsck, test-sfs, test-sfs-baseline
 make baseline         # one-time per machine — writes .perf_baseline
-./test-sfs            # run the autograder
+./test-sfs            # run the autograder (-v for full FAIL detail, -q for scoreboard only)
 ```
 
 Expected first-run output (on the unmodified skeleton):
