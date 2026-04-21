@@ -23,11 +23,29 @@ test-sfs: test-sfs.o sfs-disk.o sfs-support.o
 test-sfs-baseline: test-sfs.o sfs-baseline-ref.o sfs-support.o
 	$(CC) $(LDFLAGS) -o $@ $^
 
+# Baseline calibration: run the benchmark BASELINE_RUNS times and write
+# the median to .perf_baseline, smoothing over per-run jitter (thermal,
+# scheduler noise). Keep BASELINE_RUNS odd so the median is one observed
+# value, not an interpolation. Override with: make baseline BASELINE_RUNS=N
+BASELINE_RUNS ?= 5
+
 baseline: test-sfs-baseline
-	@echo "Calibrating machine baseline (this takes a few seconds)..."
-	@./test-sfs-baseline --perf-only > .perf_baseline.tmp
-	@mv .perf_baseline.tmp .perf_baseline
-	@echo "Baseline: $$(cat .perf_baseline) ops/sec  ->  .perf_baseline"
+	@echo "Calibrating machine baseline ($(BASELINE_RUNS) runs, median)..."
+	@rm -f .perf_baseline.tmp
+	@i=1; while [ $$i -le $(BASELINE_RUNS) ]; do \
+	  printf "  run %d/%d: " $$i $(BASELINE_RUNS); \
+	  ./test-sfs-baseline --perf-only | tee -a .perf_baseline.tmp; \
+	  i=$$((i+1)); \
+	done
+	@sort -n .perf_baseline.tmp \
+	  | awk -v n=$(BASELINE_RUNS) 'NR==int((n+1)/2){print; exit}' \
+	  > .perf_baseline
+	@awk 'NR==1{min=$$1; max=$$1} \
+	      {if($$1<min)min=$$1; if($$1>max)max=$$1} \
+	      END{printf "  spread: min=%.2f max=%.2f (%.1f%% of midpoint)\n", \
+	          min, max, 200*(max-min)/(max+min)}' .perf_baseline.tmp
+	@rm -f .perf_baseline.tmp
+	@echo "Baseline (median): $$(cat .perf_baseline) ops/sec  ->  .perf_baseline"
 .PHONY: baseline
 
 clean:

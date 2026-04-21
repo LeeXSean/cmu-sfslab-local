@@ -71,7 +71,14 @@ the performance baseline:
 make baseline
 ```
 
-This runs `test-sfs-baseline` once and caches its throughput to `.perf_baseline`.
+This runs `test-sfs-baseline` five times and caches the **median** throughput
+to `.perf_baseline`, so transient noise (thermal throttling, background load,
+scheduler jitter) doesn't skew your perf ratio. A `spread: min/max` line is
+printed so you can tell at a glance whether the run was stable — if min and
+max differ by more than ~10%, the machine was probably not quiet; re-run on
+an idle system. Override the sample count with `make baseline BASELINE_RUNS=N`
+(odd N recommended).
+
 Your perf score is then a ratio of your implementation's throughput to this
 baseline, so results are comparable across laptops.
 
