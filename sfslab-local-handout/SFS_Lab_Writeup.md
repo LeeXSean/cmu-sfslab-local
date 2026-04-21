@@ -365,6 +365,50 @@ gcc -std=c11 -g -fsanitize=thread -pthread -D_GNU_SOURCE=1 \
 ThreadSanitizer will print the exact locations of any data races it detects. This is the
 local equivalent of the ConTech-based `raceTool` used in the original CMU lab.
 
+### 5.4 Running inside Docker Desktop on Windows
+
+If you run the lab inside a Docker container whose working directory is
+bind-mounted from a Windows host (Docker Desktop's default setup), two classes
+of issue come up often enough to be worth calling out.
+
+**Jitter and high spread.** Docker Desktop on Windows routes filesystem I/O
+through a 9p / virtiofs / gRPC-FUSE layer; every `open`/`write`/`unlink` in the
+SFS disk image crosses that layer. Combined with Windows Defender scanning
+the mounted directory and the Hyper-V scheduler preempting the Linux VM,
+single-run variance of 40–70% on the perf benchmark is normal rather than a
+bug in your implementation. The 5-sample median absorbs most of this. If you
+still see the "spread exceeds 20%" warning, pick one (easiest first):
+
+1. **Move the disk images off the bind mount.** `test.img` and
+   `test_perf.img` dominate I/O cost; point them at the container's overlay FS
+   (`/tmp`) instead of the mounted project dir. Symlinks work:
+   ```bash
+   ln -sf /tmp/test.img       test.img
+   ln -sf /tmp/test_perf.img  test_perf.img
+   ```
+   Re-run `make baseline` afterwards so calibration matches.
+2. **Raise the sample count.** `make baseline BASELINE_RUNS=11` tightens
+   calibration at the cost of a longer one-time setup. For the scored run,
+   bump `PERF_SAMPLE_RUNS` in `test-sfs.c` and rebuild.
+3. **Exclude the project directory from Windows Defender** (Settings →
+   Virus & threat protection → Exclusions). Removes one randomized source of
+   latency spikes.
+4. **Move the whole project to WSL2's native filesystem** (e.g.
+   `\\wsl$\Ubuntu\home\...`). The bind mount disappears entirely and spread
+   typically drops into single digits. Most robust fix, but requires
+   relocating your workspace.
+
+**Bind-mount ghost directories.** If you delete and re-extract the handout
+while the container is running, you may see contradictory state across
+syscalls: `ls` reports the directory missing, but `mv` or `rm -rf` claims it
+still exists, and `stat` may give a different answer again. This is the
+mount driver's metadata cache disagreeing with itself — not a bug you wrote.
+Fixes, easiest first:
+
+1. Extract under a fresh name: `tar xf sfslab-local-handout.tar && mv sfslab-local-handout work-dir`.
+2. Restart the container (`docker restart <name>` from the host, then re-enter).
+3. Long-term, move the project off the Windows bind mount (option 4 above).
+
 ## 6 Concurrency Guide
 
 Once the three basic functions are implemented, the next challenge is making the file system
