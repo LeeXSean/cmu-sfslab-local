@@ -688,6 +688,12 @@ static int trace_C02(void)
 #define PERF_OPS_PER_THREAD 100
 #define PERF_DISK "test_perf.img"
 
+/* Scored perf benchmark samples this many times and uses the median.
+   Matches baseline calibration (make baseline BASELINE_RUNS=N); odd so
+   the median is a single observed value. Raise if your environment is
+   noisy (Docker bind mounts, shared laptops). */
+#define PERF_SAMPLE_RUNS 5
+
 static void *perf_worker(void *arg)
 {
     int id = *(int *)arg;
@@ -850,13 +856,38 @@ static double run_perf_benchmark_raw(void)
     return (double)total_ops / secs;
 }
 
+static int cmp_double_asc(const void *a, const void *b)
+{
+    double da = *(const double *)a;
+    double db = *(const double *)b;
+    return (da > db) - (da < db);
+}
+
 static int run_perf_benchmark(void)
 {
-    double ops_per_sec = run_perf_benchmark_raw();
+    double samples[PERF_SAMPLE_RUNS];
+    for (int i = 0; i < PERF_SAMPLE_RUNS; i++)
+    {
+        samples[i] = run_perf_benchmark_raw();
+        printf("  run %d/%d: %.0f ops/sec\n", i + 1, PERF_SAMPLE_RUNS,
+               samples[i]);
+        fflush(stdout);
+    }
+
+    qsort(samples, PERF_SAMPLE_RUNS, sizeof samples[0], cmp_double_asc);
+    double median = samples[PERF_SAMPLE_RUNS / 2];
+    double lo = samples[0];
+    double hi = samples[PERF_SAMPLE_RUNS - 1];
+    double spread = 200.0 * (hi - lo) / (hi + lo);
+
     int total_ops = PERF_THREADS * PERF_OPS_PER_THREAD;
-    printf("  Student throughput: %.0f ops/sec (%d total ops)\n",
-           ops_per_sec, total_ops);
-    return score_perf_against_baseline(ops_per_sec);
+    printf("  Student throughput (median of %d): %.0f ops/sec "
+           "(%d ops/run, spread %.1f%%)\n",
+           PERF_SAMPLE_RUNS, median, total_ops, spread);
+    if (spread > 20.0)
+        printf("  Warning: spread exceeds 20%% -- perf ratio will be noisy;\n"
+               "           see writeup section 5.4 (Docker/Windows) for mitigation.\n");
+    return score_perf_against_baseline(median);
 }
 
 /* ================================================================== */

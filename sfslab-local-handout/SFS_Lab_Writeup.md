@@ -300,7 +300,13 @@ original CMU ConTech-based race detection. If your system does not support
 `-fsanitize=thread`, the TSan check is skipped without penalty.
 
 The performance benchmark uses 8 threads each doing 100 open/write/seek/read/close
-cycles. Raw ops/sec is machine-dependent, so the score is instead a ratio against
+cycles. The benchmark is **sampled 5 times and the median ops/sec is scored**,
+mirroring what `make baseline` does for calibration — this keeps the numerator
+and denominator of your ratio on the same statistical footing. A `spread`
+percentage is printed (200 × (max − min) / (max + min)); the autograder also
+prints a warning if spread exceeds 20%, pointing at §5.4 for mitigations.
+
+Raw ops/sec is machine-dependent, so the score is instead a ratio against
 a shipped reference implementation (the handout code wrapped with a single global
 mutex) measured on the same machine via `make baseline`. Let
 `ratio = student_ops / baseline_ops`:
