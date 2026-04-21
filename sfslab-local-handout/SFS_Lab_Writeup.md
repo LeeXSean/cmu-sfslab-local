@@ -379,14 +379,19 @@ single-run variance of 40–70% on the perf benchmark is normal rather than a
 bug in your implementation. The 5-sample median absorbs most of this. If you
 still see the "spread exceeds 20%" warning, pick one (easiest first):
 
-1. **Move the disk images off the bind mount.** `test.img` and
-   `test_perf.img` dominate I/O cost; point them at the container's overlay FS
-   (`/tmp`) instead of the mounted project dir. Symlinks work:
+1. **Move the disk images off the bind mount** with the `SFS_DISK_DIR` env
+   var. The three disk images (`test.img`, `test_conc.img`, `test_perf.img`)
+   dominate I/O cost; pointing them at the container's overlay FS (`/tmp`)
+   keeps them off the Windows bind mount entirely:
    ```bash
-   ln -sf /tmp/test.img       test.img
-   ln -sf /tmp/test_perf.img  test_perf.img
+   export SFS_DISK_DIR=/tmp
+   make baseline          # recalibrate in the new location
+   ./test-sfs             # scored run
    ```
-   Re-run `make baseline` afterwards so calibration matches.
+   The autograder prints `Disk images redirected via SFS_DISK_DIR: /tmp` to
+   stderr when the variable is set, so you can confirm it took effect. On
+   a typical Docker-on-Windows setup this alone drops spread from 40–70%
+   into the single digits.
 2. **Raise the sample count.** `make baseline BASELINE_RUNS=11` tightens
    calibration at the cost of a longer one-time setup. For the scored run,
    bump `PERF_SAMPLE_RUNS` in `test-sfs.c` and rebuild.

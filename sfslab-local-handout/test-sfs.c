@@ -31,8 +31,36 @@
 #include <time.h>
 #include <unistd.h>
 
-#define DISK_NAME "test.img"
-#define CONC_DISK "test_conc.img"
+/* Disk image paths. Default to the current directory; override with
+   SFS_DISK_DIR=/some/path (e.g. SFS_DISK_DIR=/tmp on Docker Desktop
+   to keep perf I/O off the bind mount — see writeup §5.4). */
+static const char *DISK_NAME = "test.img";
+static const char *CONC_DISK = "test_conc.img";
+static const char *PERF_DISK = "test_perf.img";
+
+static char *sfs_join(const char *dir, const char *name)
+{
+    size_t len = strlen(dir) + 1 + strlen(name) + 1;
+    char *out = malloc(len);
+    if (!out)
+    {
+        fprintf(stderr, "out of memory\n");
+        exit(1);
+    }
+    snprintf(out, len, "%s/%s", dir, name);
+    return out;
+}
+
+static void init_disk_paths(void)
+{
+    const char *dir = getenv("SFS_DISK_DIR");
+    if (!dir || !*dir)
+        return;
+    DISK_NAME = sfs_join(dir, "test.img");
+    CONC_DISK = sfs_join(dir, "test_conc.img");
+    PERF_DISK = sfs_join(dir, "test_perf.img");
+    fprintf(stderr, "Disk images redirected via SFS_DISK_DIR: %s\n", dir);
+}
 
 /* ------------------------------------------------------------------ */
 /*  Per-trace check infrastructure                                     */
@@ -686,7 +714,6 @@ static int trace_C02(void)
 
 #define PERF_THREADS 8
 #define PERF_OPS_PER_THREAD 100
-#define PERF_DISK "test_perf.img"
 
 /* Scored perf benchmark samples this many times and uses the median.
    Matches baseline calibration (make baseline BASELINE_RUNS=N); odd so
@@ -943,7 +970,7 @@ static int run_tsan_check(void)
         race_found = 1;
 
     unlink(tsan_log);
-    unlink("test_conc.img");
+    unlink(CONC_DISK);
 
     if (race_found)
     {
@@ -1179,6 +1206,8 @@ static int run_category(const char *label, struct trace_entry *traces, int n)
 
 int main(int argc, char *argv[])
 {
+    init_disk_paths();
+
     int mode_tsan_only = 0;
     int mode_perf_only = 0;
     for (int i = 1; i < argc; i++)
