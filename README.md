@@ -82,6 +82,11 @@ Expected first-run output (on the unmodified skeleton):
 As you implement functions and add locking, categories fill in and perf
 starts producing a ratio against the reference implementation.
 
+**Running inside Docker Desktop on Windows?** The bind-mount filesystem
+layer adds significant I/O jitter — see writeup §5.4 for the one-line
+`SFS_DISK_DIR=/tmp` fix that typically drops perf spread from 40–70%
+into the single digits.
+
 Full details, including how to interpret the scoreboard and how the
 race detector is wired in, live in `sfslab-local-handout/SFS_Lab_Writeup.md`.
 
