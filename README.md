@@ -24,7 +24,7 @@ cmu-sfslab-local/
 │   ├── sfs-fsck.c                   #   disk consistency checker
 │   ├── test-sfs.c                   #   local autograder (all categories)
 │   └── Makefile
-└── sfslab-local-handout.tar.gz      # the same handout, packaged
+└── sfslab-local-handout.tar         # the same handout, packaged
 ```
 
 The in-directory file list matches `SFS_Lab_Writeup.md` §2.1.
@@ -63,7 +63,7 @@ filesystem design, the three functions you must implement (`sfs_getpos`,
 On Ubuntu 18.04 (or any glibc 2.27+ Linux with GCC 7.5+):
 
 ```bash
-tar xzf sfslab-local-handout.tar.gz
+tar xvf sfslab-local-handout.tar
 cd sfslab-local-handout
 
 make                  # builds sfs-fsck, test-sfs, test-sfs-baseline

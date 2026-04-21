@@ -87,6 +87,9 @@ The test driver will exercise all SFS API functions and report pass/fail for eac
 Before you implement anything, you should see failures for `sfs_getpos`, `sfs_seek`, and
 `sfs_rename`. As you implement each function, the corresponding tests will start passing.
 
+See §5.1 for output-verbosity knobs (`-v` for full FAIL detail, `-q` for
+scoreboard only).
+
 You can also check a disk image for structural consistency:
 
 ```bash
@@ -234,6 +237,10 @@ Category A (Feature Tests):
   A00 format_mount            PASS  [1/1]
   A01 open_close_rw           PASS  [1/1]
   A02 getpos                  FAIL  [0/1]
+       -> FAIL [test-sfs.c:163]: initial getpos should be 0, got -38
+       -> FAIL [test-sfs.c:167]: getpos after write(10) should be 10, got -38
+       -> FAIL [test-sfs.c:169]: getpos(-1) should return -EBADF
+       -> (... 1 more fail suppressed)
   A03 seek                    FAIL  [0/1]
   A04 rename                  FAIL  [0/1]
   Subtotal: 2/5
@@ -275,8 +282,9 @@ suppressed)`.
   you only want the scoreboard.
 - `./test-sfs -v` (`--verbose`) raises the cap to unlimited.
 
-Flags can appear in any order and combine freely with `--tsan-only` and
-`--perf-only`.
+Flags can appear in any order and combine with `--tsan-only`.
+(`--perf-only` only emits a single ops/sec number, so verbosity has no
+effect there.)
 
 **Note on Category C:** After running the C traces, the autograder automatically compiles
 a ThreadSanitizer build and re-runs the concurrent tests. If TSan detects any data races,
