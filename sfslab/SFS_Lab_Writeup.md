@@ -238,7 +238,7 @@ The autograder is organized into the same categories as the original:
 | Category | Traces | Points | What it tests |
 |----------|--------|--------|---------------|
 | A (Feature Tests) | A00-A04 | 5 | format/mount, open/close/rw, getpos, seek, rename |
-| B (Sequential Correctness) | B00-B03 | 4 | remove/list/reuse, multi-block seek + cross-boundary read, edge cases, open-file lifecycle, rename/list checks |
+| B (Sequential Correctness) | B00-B03 | 4 | remove/list/reuse, multi-block seek + cross-boundary read, edge cases, open-file lifecycle, rename/list/reuse checks |
 | C (Concurrent Correctness) | C00-C02 | 3 | separate-file writes, shared reads, r/w mix + open/list/remove storm |
 | Performance | benchmark | 10 | Concurrent throughput (only runs if correctness = 12/12) |
 | Style | -- | 4 | Manual self-review (not auto-graded) |

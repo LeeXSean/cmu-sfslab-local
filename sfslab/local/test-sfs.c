@@ -680,12 +680,12 @@ static int trace_B03(void)
 
     int fd = sfs_open("src");
     CHECK(fd >= 0, "open src returned %d", fd);
-    CHECK(sfs_write(fd, "SRC", 3) == 3, "write src failed");
+    CHECK(sfs_write(fd, "SRC-DATA", 8) == 8, "write src failed");
     sfs_close(fd);
 
     fd = sfs_open("dst");
     CHECK(fd >= 0, "open dst returned %d", fd);
-    CHECK(sfs_write(fd, "DST", 3) == 3, "write dst failed");
+    CHECK(sfs_write(fd, "D", 1) == 1, "write dst failed");
     sfs_close(fd);
 
     fd = sfs_open("keep");
@@ -715,11 +715,36 @@ static int trace_B03(void)
 
     fd = sfs_open("dst");
     CHECK(fd >= 0, "open dst after rename returned %d", fd);
-    char buf[8] = {0};
-    ssize_t nr = sfs_read(fd, buf, 3);
-    CHECK(nr == 3 && memcmp(buf, "SRC", 3) == 0,
-          "dst should contain renamed src data");
+    char buf[16] = {0};
+    ssize_t nr = sfs_read(fd, buf, sizeof buf);
+    CHECK(nr == 8 && memcmp(buf, "SRC-DATA", 8) == 0,
+          "dst should contain renamed src data with updated size");
     sfs_close(fd);
+
+    fd = sfs_open("reuse");
+    CHECK(fd >= 0, "open reuse after overwrite rename returned %d", fd);
+    CHECK(sfs_write(fd, "R", 1) == 1, "write reuse failed");
+    sfs_close(fd);
+
+    cookie = NULL;
+    count = 0;
+    saw_src = 0;
+    saw_dst = 0;
+    saw_keep = 0;
+    int saw_reuse = 0;
+    while (sfs_list(&cookie, name, sizeof name) == 0)
+    {
+        count++;
+        if (strcmp(name, "src") == 0) saw_src = 1;
+        if (strcmp(name, "dst") == 0) saw_dst = 1;
+        if (strcmp(name, "keep") == 0) saw_keep = 1;
+        if (strcmp(name, "reuse") == 0) saw_reuse = 1;
+    }
+    CHECK(count == 3, "expected 3 files after rename-slot reuse, got %d",
+          count);
+    CHECK(!saw_src, "src should not reappear after slot reuse");
+    CHECK(saw_dst && saw_keep && saw_reuse,
+          "dst, keep, and reuse should be listed");
 
     char longname[SFS_FILE_NAME_SIZE_LIMIT + 8];
     memset(longname, 'x', sizeof longname - 1);
