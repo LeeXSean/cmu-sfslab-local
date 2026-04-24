@@ -6,8 +6,10 @@ RUN apt-get update && \
         ca-certificates \
         clang-format \
         gdb \
+        liblua5.4-dev \
         lua5.4 \
         make \
+        pkg-config \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /work/sfslab

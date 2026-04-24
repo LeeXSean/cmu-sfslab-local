@@ -67,6 +67,12 @@ Useful make targets:
     make trace-check
         Syntax-check Lua-style traces when `luac` is installed.
 
+    make trace-run
+        Build the local Lua runner and execute the Lua-style traces.
+
+    make trace-smoke
+        Execute only the Lua traces that should pass on the starter.
+
     make trace-list
         Print the local autograder traces and point values as TSV.
 

@@ -18,7 +18,12 @@ being runnable without CMU infrastructure.
 - `local/sfs-baseline-ref.c` is a coarse-lock reference used only for local
   performance calibration.
 - `traces/` contains Lua-style trace fixtures for documentation and future
-  runner work. They are not executed by the current local grader.
+  runner work.
+- `make trace-smoke` executes the starter-safe Lua traces. `make trace-run`
+  executes the full Lua-style catalog and is expected to fail on the
+  unmodified skeleton. The local binding includes a synchronous fallback for
+  `lanes.gen`; the C autograder remains the source of real concurrent stress
+  testing.
 - The repository root `Dockerfile` provides a Linux toolchain for builds,
   ThreadSanitizer runs, and future Lua trace work.
 - `local/SCORING.md` explains why the local score is a self-study signal, not

@@ -36,6 +36,18 @@ trace-check:
 trace-list:
 	$(MAKE) -C $(HANDOUT) trace-list
 
+.PHONY: lua-runner
+lua-runner:
+	$(MAKE) -C $(HANDOUT) lua-runner
+
+.PHONY: trace-run
+trace-run:
+	$(MAKE) -C $(HANDOUT) trace-run
+
+.PHONY: trace-smoke
+trace-smoke:
+	$(MAKE) -C $(HANDOUT) trace-smoke
+
 .PHONY: manifest-check
 manifest-check:
 	$(MAKE) -C $(HANDOUT) manifest-check

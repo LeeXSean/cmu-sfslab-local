@@ -1,3 +1,5 @@
+assert(check(disk.format(TRACE_DISK, TRACE_DISK_SIZE)) == 0)
+
 local laneproc = lanes.gen("string,disk", function(tid)
     local name = string.format("file-%d", tid)
     local fd = check(disk.open(name))
@@ -16,3 +18,5 @@ end
 for i = 1, 8 do
     check(workers[i]:join())
 end
+
+assert(check(disk.unmount()) == 0)

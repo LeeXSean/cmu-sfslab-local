@@ -1,3 +1,5 @@
+assert(check(disk.format(TRACE_DISK, TRACE_DISK_SIZE)) == 0)
+
 local fd = check(disk.open("old"))
 assert(check(disk.write(fd, "payload")) == 7)
 disk.close(fd)
@@ -8,3 +10,4 @@ fd = check(disk.open("new"))
 local out = check(disk.read(fd, 7))
 assert(out == "payload")
 disk.close(fd)
+assert(check(disk.unmount()) == 0)

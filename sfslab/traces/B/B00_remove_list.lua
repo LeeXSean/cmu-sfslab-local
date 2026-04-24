@@ -1,3 +1,5 @@
+assert(check(disk.format(TRACE_DISK, TRACE_DISK_SIZE)) == 0)
+
 local fd = check(disk.open("del.txt"))
 assert(check(disk.write(fd, "bye")) == 3)
 disk.close(fd)
@@ -14,3 +16,5 @@ for _ in disk.list() do
     count = count + 1
 end
 assert(count == 3)
+
+assert(check(disk.unmount()) == 0)

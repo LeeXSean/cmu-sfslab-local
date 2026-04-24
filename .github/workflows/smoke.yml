@@ -13,10 +13,13 @@ jobs:
       - name: Install trace tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y lua5.4
+          sudo apt-get install -y liblua5.4-dev lua5.4 pkg-config
 
       - name: Check handout
         run: make check
+
+      - name: Run Lua trace smoke
+        run: make trace-smoke
 
       - name: Build dist tarball
         run: make dist

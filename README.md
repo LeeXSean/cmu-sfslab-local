@@ -58,6 +58,8 @@ make smoke
 make check
 make json
 make trace-check
+make trace-smoke
+make trace-run
 make trace-list
 make manifest-check
 make handout-check
@@ -73,6 +75,11 @@ reproducible GNU tar flags when they are available.
 
 `make json` exits nonzero when correctness fails, just like `make test`; the
 JSON is still written to stdout.
+
+`make trace-smoke` builds the local Lua runner and executes the starter-safe
+Lua traces. `make trace-run` executes the full Lua-style trace catalog and is
+expected to fail on the unmodified skeleton. Both need `pkg-config` and Lua
+development headers.
 
 The unmodified skeleton is expected to fail the tests for `sfs_getpos`,
 `sfs_seek`, and `sfs_rename`. Those failures are the starting point of the lab,

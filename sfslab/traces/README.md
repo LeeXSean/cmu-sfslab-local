@@ -19,7 +19,8 @@ etc.) follow the course-style trace vocabulary, but this repository does not
 ship a Lua binding yet.
 
 Run `make trace-check` from the handout root to syntax-check these files when
-`luac` is installed. This does not execute SFS operations.
+`luac` is installed. Run `make trace-smoke` to check the starter-safe traces,
+or `make trace-run` to execute the full catalog through the local Lua binding.
 
 Run `make manifest-check` to compare `MANIFEST.tsv` with the local autograder's
 current trace list.

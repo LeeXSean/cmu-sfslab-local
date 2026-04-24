@@ -1,3 +1,5 @@
+assert(check(disk.format(TRACE_DISK, TRACE_DISK_SIZE)) == 0)
+
 local fd = check(disk.open("empty.txt"))
 assert(check(disk.read(fd, 64)) == "")
 assert(check(disk.getPos(fd)) == 0)
@@ -23,3 +25,5 @@ assert(check(disk.getPos(fd1)) == 12)
 assert(check(disk.getPos(fd2)) == 5)
 disk.close(fd1)
 disk.close(fd2)
+
+assert(check(disk.unmount()) == 0)

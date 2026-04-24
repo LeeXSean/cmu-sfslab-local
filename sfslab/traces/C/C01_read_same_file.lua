@@ -1,3 +1,5 @@
+assert(check(disk.format(TRACE_DISK, TRACE_DISK_SIZE)) == 0)
+
 local fd = check(disk.open("shared"))
 assert(check(disk.write(fd, string.rep("x", 256))) == 256)
 disk.close(fd)
@@ -18,3 +20,5 @@ end
 for i = 1, 8 do
     check(workers[i]:join())
 end
+
+assert(check(disk.unmount()) == 0)

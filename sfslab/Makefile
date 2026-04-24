@@ -79,6 +79,20 @@ trace-list: test-sfs
 	./test-sfs --list-traces
 .PHONY: trace-list
 
+lua-runner:
+	@sh local/build-lua-runner.sh
+.PHONY: lua-runner
+
+trace-run: lua-runner
+	@sh local/run-lua-traces.sh
+.PHONY: trace-run
+
+trace-smoke: lua-runner
+	@sh local/run-lua-traces.sh \
+	  traces/A/A00_format_mount.lua \
+	  traces/A/A01_open_close_rw.lua
+.PHONY: trace-smoke
+
 manifest-check: test-sfs
 	@sh local/manifest-check.sh
 .PHONY: manifest-check
@@ -92,7 +106,7 @@ starter-check:
 .PHONY: starter-check
 
 clean:
-	-rm -f $(PROGRAMS) test-sfs-tsan *.o local/*.o *.img tsan_output.log .perf_baseline .perf_baseline.tmp
+	-rm -f $(PROGRAMS) lua-sfs-runner test-sfs-tsan *.o local/*.o *.img trace.img tsan_output.log .perf_baseline .perf_baseline.tmp
 .PHONY: clean
 
 ## cut here ##
