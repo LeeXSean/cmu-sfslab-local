@@ -72,6 +72,10 @@ handout-check:
 	@sh local/handout-check.sh
 .PHONY: handout-check
 
+starter-check:
+	@sh local/starter-check.sh
+.PHONY: starter-check
+
 clean:
 	-rm -f $(PROGRAMS) test-sfs-tsan *.o local/*.o *.img tsan_output.log .perf_baseline .perf_baseline.tmp
 .PHONY: clean

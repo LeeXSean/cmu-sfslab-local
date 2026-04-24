@@ -23,3 +23,6 @@ jobs:
 
       - name: Check handout package
         run: make handout-check
+
+      - name: Check starter stubs
+        run: make starter-check
