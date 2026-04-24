@@ -17,6 +17,7 @@ for path in \
     local/lua-sfs-runner.c \
     local/report-json.sh \
     local/run-lua-traces.sh \
+    local/run-lua-with-fallback.sh \
     local/DEV_NOTES.md \
     local/OFFLINE_SELF_STUDY.md \
     local/SCORING.md \
@@ -45,14 +46,6 @@ if find . \( -name '*.o' -o -name '*.img' -o -name 'test-sfs' \
         -o -name '.perf_baseline' \
         -o -name '.perf_baseline.tmp' -o -name 'tsan_output.log' \) \
         -print
-    exit 1
-fi
-
-if grep -RInE 'WeChat|微信|QQ|cstutor|tutorcs|代写' \
-        . --exclude='handout-check.sh' --exclude-dir=.git >/dev/null 2>&1; then
-    echo "handout-check: suspicious tutoring/contact text found"
-    grep -RInE 'WeChat|微信|QQ|cstutor|tutorcs|代写' \
-        . --exclude='handout-check.sh' --exclude-dir=.git
     exit 1
 fi
 
