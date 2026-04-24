@@ -57,6 +57,8 @@ dist:
 	$(MAKE) -C $(HANDOUT) clean
 	$(MAKE) -C $(HANDOUT) handout-check
 	$(MAKE) -C $(HANDOUT) starter-check
+	$(MAKE) -C $(HANDOUT) manifest-check
+	$(MAKE) -C $(HANDOUT) clean
 	@if tar --version 2>/dev/null | grep -qi 'gnu tar'; then \
 	  tar --sort=name --mtime='$(DIST_MTIME)' \
 	    --owner=0 --group=0 --numeric-owner -cf $(DIST) $(HANDOUT); \

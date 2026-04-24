@@ -17,3 +17,6 @@ jobs:
 
       - name: Check handout
         run: make check
+
+      - name: Build dist tarball
+        run: make dist

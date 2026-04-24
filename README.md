@@ -68,8 +68,8 @@ make dist
 GitHub Actions runs the same smoke and trace syntax checks on pushes and pull
 requests.
 
-`make dist` runs the handout checks first and uses reproducible GNU tar flags
-when they are available.
+`make dist` runs the handout, starter, and manifest checks first, then uses
+reproducible GNU tar flags when they are available.
 
 `make json` exits nonzero when correctness fails, just like `make test`; the
 JSON is still written to stdout.
