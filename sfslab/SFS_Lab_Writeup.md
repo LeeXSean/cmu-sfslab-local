@@ -236,7 +236,7 @@ The autograder is organized into the same categories as the original:
 |----------|--------|--------|---------------|
 | A (Feature Tests) | A00-A04 | 5 | format/mount, open/close/rw, getpos, seek, rename |
 | B (Sequential Correctness) | B00-B03 | 4 | remove/list, multi-block seek + cross-boundary read, edge cases, open-file lifecycle, rename/list checks |
-| C (Concurrent Correctness) | C00-C02 | 3 | separate-file writes, shared reads, r/w mix + storm |
+| C (Concurrent Correctness) | C00-C02 | 3 | separate-file writes, shared reads, r/w mix + open/list/remove storm |
 | Performance | benchmark | 10 | Concurrent throughput (only runs if correctness = 12/12) |
 | Style | -- | 4 | Manual self-review (not auto-graded) |
 
@@ -274,20 +274,20 @@ Category B (Sequential Correctness):
 Category C (Concurrent Correctness):
   C00 separate_files          PASS  [1/1]
   C01 read_same_file          PASS  [1/1]
-  C02 rw_mix_storm            PASS  [1/1]
-  Subtotal: 3/3
+  C02 rw_mix_storm            FAIL  [0/1]
+  Subtotal: 2/3
 
 Race Detection (ThreadSanitizer):
-  DATA RACE DETECTED -- Category C score set to 0
+  (skipped -- concurrent correctness traces must all pass first)
 
-Correctness: 3/12
+Correctness: 5/12
 
 Performance:
   (skipped -- correctness tests must all pass first)
   Score: 0/10
 
 ----------------------------------------
-  Total: 3/22  (+ up to 4 style pts)
+  Total: 5/22  (+ up to 4 style pts)
 ========================================
 ```
 
@@ -306,11 +306,12 @@ Flags can appear in any order and combine with `--tsan-only`.
 (`--perf-only` only emits a single ops/sec number, so verbosity has no
 effect there.)
 
-**Note on Category C:** After running the C traces, the autograder automatically compiles
-a ThreadSanitizer build and re-runs the concurrent tests. If TSan detects any data races,
-the Category C score is set to 0 -- even if the traces appeared to pass. This mirrors the
-original CMU ConTech-based race detection. If your system does not support
-`-fsanitize=thread`, the TSan check is skipped without penalty.
+**Note on Category C:** After the normal C traces all pass, the autograder automatically
+compiles a ThreadSanitizer build and re-runs the concurrent tests. If TSan detects any
+data races, the Category C score is set to 0 -- even if the normal traces appeared to
+pass. This mirrors the original CMU ConTech-based race detection. If a normal C trace
+already fails, TSan is skipped and the normal per-trace C score is reported. If your
+system does not support `-fsanitize=thread`, the TSan check is skipped without penalty.
 
 The performance benchmark uses 8 threads each doing 100 open/write/seek/read/close
 cycles. The benchmark is **sampled 5 times and the median ops/sec is scored**,

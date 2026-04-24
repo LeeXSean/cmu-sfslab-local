@@ -20,6 +20,7 @@
 #include <math.h>
 #include <poll.h>
 #include <pthread.h>
+#include <sched.h>
 #include <signal.h>
 #include <stdatomic.h>
 #include <stdint.h>
@@ -39,6 +40,7 @@ static const char *CONC_DISK_C00 = "test_conc_C00.img";
 static const char *CONC_DISK_C01 = "test_conc_C01.img";
 static const char *CONC_DISK_C02_RW = "test_conc_C02_rw.img";
 static const char *CONC_DISK_C02_STORM = "test_conc_C02_storm.img";
+static const char *CONC_DISK_C02_DIR = "test_conc_C02_dir.img";
 static const char *PERF_DISK = "test_perf.img";
 
 static char *sfs_join(const char *dir, const char *name)
@@ -64,6 +66,7 @@ static void init_disk_paths(void)
     CONC_DISK_C01 = sfs_join(dir, "test_conc_C01.img");
     CONC_DISK_C02_RW = sfs_join(dir, "test_conc_C02_rw.img");
     CONC_DISK_C02_STORM = sfs_join(dir, "test_conc_C02_storm.img");
+    CONC_DISK_C02_DIR = sfs_join(dir, "test_conc_C02_dir.img");
     PERF_DISK = sfs_join(dir, "test_perf.img");
     fprintf(stderr, "Disk images redirected via SFS_DISK_DIR: %s\n", dir);
 }
@@ -74,6 +77,7 @@ static void cleanup_concurrency_disks(void)
     unlink(CONC_DISK_C01);
     unlink(CONC_DISK_C02_RW);
     unlink(CONC_DISK_C02_STORM);
+    unlink(CONC_DISK_C02_DIR);
 }
 
 /* ------------------------------------------------------------------ */
@@ -869,7 +873,73 @@ static void *thread_open_close_storm(void *arg)
     return NULL;
 }
 
-/* C02: mixed r/w + open/close storm */
+static _Atomic int dir_churn_start;
+static _Atomic int dir_churn_done;
+
+static void wait_dir_churn_start(void)
+{
+    while (!atomic_load_explicit(&dir_churn_start, memory_order_acquire))
+        sched_yield();
+}
+
+static void *thread_dir_churn(void *arg)
+{
+    int id = *(int *)arg;
+    wait_dir_churn_start();
+
+    for (int i = 0; i < 20; i++)
+    {
+        char name[SFS_FILE_NAME_SIZE_LIMIT];
+        int n = snprintf(name, sizeof name, "dir%d_%02d", id, i);
+        if (n < 0 || (size_t)n >= sizeof name)
+            return (void *)(intptr_t)-1;
+
+        int fd = sfs_open(name);
+        if (fd < 0)
+            return (void *)(intptr_t)-1;
+
+        char data[32];
+        int len = snprintf(data, sizeof data, "dir-%d-%d", id, i);
+        if (len < 0 || sfs_write(fd, data, (size_t)len) != (ssize_t)len)
+        {
+            sfs_close(fd);
+            return (void *)(intptr_t)-1;
+        }
+        sfs_close(fd);
+
+        if (sfs_remove(name) != 0)
+            return (void *)(intptr_t)-1;
+        sched_yield();
+    }
+    return NULL;
+}
+
+static void *thread_list_during_churn(void *arg)
+{
+    wait_dir_churn_start();
+
+    int passes = 0;
+    do
+    {
+        sfs_list_cookie cookie = NULL;
+        char name[SFS_FILE_NAME_SIZE_LIMIT];
+        int status;
+        while ((status = sfs_list(&cookie, name, sizeof name)) == 0)
+        {
+            if (name[0] == '\0')
+                return (void *)(intptr_t)-1;
+        }
+        if (status != 1)
+            return (void *)(intptr_t)-1;
+        passes++;
+        sched_yield();
+    } while (!atomic_load_explicit(&dir_churn_done, memory_order_acquire) ||
+             passes < 4);
+
+    return NULL;
+}
+
+/* C02: mixed r/w + open/close and directory storms */
 static int trace_C02(void)
 {
     trace_ok = 1;
@@ -919,6 +989,49 @@ static int trace_C02(void)
 
     unmount_and_check(CONC_DISK_C02_STORM);
     unlink(CONC_DISK_C02_STORM);
+
+    /* Part 3: directory churn while another thread lists */
+    sfs_format(CONC_DISK_C02_DIR, disk_size());
+    atomic_store_explicit(&dir_churn_start, 0, memory_order_release);
+    atomic_store_explicit(&dir_churn_done, 0, memory_order_release);
+
+    pthread_t lister;
+    pthread_t dir_threads[NUM_THREADS];
+    int dir_ids[NUM_THREADS];
+    pthread_create(&lister, NULL, thread_list_during_churn, NULL);
+    for (int i = 0; i < NUM_THREADS; i++)
+    {
+        dir_ids[i] = i;
+        pthread_create(&dir_threads[i], NULL, thread_dir_churn, &dir_ids[i]);
+    }
+    atomic_store_explicit(&dir_churn_start, 1, memory_order_release);
+
+    ok = 1;
+    for (int i = 0; i < NUM_THREADS; i++)
+    {
+        void *ret;
+        pthread_join(dir_threads[i], &ret);
+        if (ret != NULL)
+            ok = 0;
+    }
+    atomic_store_explicit(&dir_churn_done, 1, memory_order_release);
+
+    void *list_ret;
+    pthread_join(lister, &list_ret);
+    if (list_ret != NULL)
+        ok = 0;
+    CHECK(ok, "concurrent directory churn failed");
+
+    cookie = NULL;
+    count = 0;
+    int status;
+    while ((status = sfs_list(&cookie, name, sizeof name)) == 0)
+        count++;
+    CHECK(status == 1, "final list returned %d", status);
+    CHECK(count == 0, "directory churn: expected 0 files, got %d", count);
+
+    unmount_and_check(CONC_DISK_C02_DIR);
+    unlink(CONC_DISK_C02_DIR);
     return trace_ok;
 }
 

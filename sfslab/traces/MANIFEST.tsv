@@ -10,4 +10,4 @@ B02	B	traces/B/B02_edge_cases.lua	no	fail	empty files, position tracking, duplic
 B03	B	traces/B/B03_rename_list_edges.lua	no	fail	overwrite rename updates list state
 C00	C	traces/C/C00_separate_files.lua	yes	pass	independent concurrent file writes
 C01	C	traces/C/C01_read_same_file.lua	yes	pass	concurrent reads of the same file
-C02	C	traces/C/C02_rw_mix_storm.lua	no	fail	mixed concurrent read/write storm
+C02	C	traces/C/C02_rw_mix_storm.lua	no	fail	mixed concurrent read/write, open/close, and directory churn
