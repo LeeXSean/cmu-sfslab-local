@@ -35,5 +35,6 @@ WSL, filesystem latency, scheduler noise, and CPU load.
 
 - Add more A/B/C traces before adding more performance thresholds.
 - Expand the Lua trace catalog now that `traces/` can run locally.
-- Add expected-fail and starter-safe metadata to the trace manifest.
+- Use the trace manifest's starter metadata to keep smoke checks aligned with
+  the Lua catalog.
 - Keep the local score separate from any official course score.

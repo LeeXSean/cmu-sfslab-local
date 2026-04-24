@@ -92,9 +92,7 @@ trace-json: lua-runner
 .PHONY: trace-json
 
 trace-smoke: lua-runner
-	@sh local/run-lua-traces.sh \
-	  traces/A/A00_format_mount.lua \
-	  traces/A/A01_open_close_rw.lua
+	@sh local/run-lua-traces.sh --starter-safe
 .PHONY: trace-smoke
 
 manifest-check: test-sfs

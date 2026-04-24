@@ -12,7 +12,8 @@ an executable companion to the C autograder.
 - `A/`: single-threaded feature tests.
 - `B/`: sequential versions of more complex operations.
 - `C/`: concurrent versions of related operations.
-- `MANIFEST.tsv`: trace id, category, file path, and purpose.
+- `MANIFEST.tsv`: trace id, category, file path, starter expectation, and
+  purpose.
 
 The helper names used below (`disk.open`, `disk.write`, `check`, `lanes.gen`,
 etc.) follow the course-style trace vocabulary. The local binding provides a

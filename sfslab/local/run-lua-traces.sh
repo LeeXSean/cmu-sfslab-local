@@ -2,10 +2,26 @@
 set -eu
 
 json=0
-if [ "${1:-}" = "--json" ]; then
-    json=1
-    shift
-fi
+starter_safe=0
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --json)
+            json=1
+            shift
+            ;;
+        --starter-safe)
+            starter_safe=1
+            shift
+            ;;
+        --)
+            shift
+            break
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
 
 if [ ! -x ./lua-sfs-runner ]; then
     echo "trace-run: lua-sfs-runner is missing; run make lua-runner"
@@ -13,7 +29,12 @@ if [ ! -x ./lua-sfs-runner ]; then
 fi
 
 if [ "$#" -eq 0 ]; then
-    set -- $(find traces -type f -name '*.lua' | sort)
+    if [ "$starter_safe" -eq 1 ]; then
+        set -- $(awk -F '\t' 'NR > 1 && $4 == "yes" { print $3 }' \
+            traces/MANIFEST.tsv)
+    else
+        set -- $(find traces -type f -name '*.lua' | sort)
+    fi
 fi
 
 total=0
@@ -51,7 +72,9 @@ if [ "$json" -eq 1 ]; then
             if (FNR > 1 && $1 != "") {
                 mid[$3] = $1
                 mcat[$3] = $2
-                mpurpose[$3] = $4
+                msafe[$3] = $4
+                mstarter[$3] = $5
+                mpurpose[$3] = $6
             }
             next
         }
@@ -72,6 +95,8 @@ if [ "$json" -eq 1 ]; then
             tid[n] = id
             tcat[n] = cat
             tok[n] = ok
+            tsafe[n] = msafe[path]
+            tstarter[n] = mstarter[path]
             tpurpose[n] = mpurpose[path]
 
             total++
@@ -89,9 +114,10 @@ if [ "$json" -eq 1 ]; then
             print "  },"
             print "  \"traces\": ["
             for (i = 1; i <= n; i++) {
-                printf "    {\"id\": %s, \"category\": %s, \"path\": %s, \"purpose\": %s, \"passed\": %s}%s\n", \
-                    js(tid[i]), js(tcat[i]), js(tpath[i]), js(tpurpose[i]), \
-                    tok[i] ? "true" : "false", i == n ? "" : ","
+                printf "    {\"id\": %s, \"category\": %s, \"path\": %s, \"starter_safe\": %s, \"starter_status\": %s, \"purpose\": %s, \"passed\": %s}%s\n", \
+                    js(tid[i]), js(tcat[i]), js(tpath[i]), js(tsafe[i]), \
+                    js(tstarter[i]), js(tpurpose[i]), tok[i] ? "true" : "false", \
+                    i == n ? "" : ","
             }
             print "  ]"
             print "}"

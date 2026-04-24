@@ -81,8 +81,8 @@ reproducible GNU tar flags when they are available.
 `make json` exits nonzero when correctness fails, just like `make test`; the
 JSON is still written to stdout.
 
-`make trace-smoke` builds the local Lua runner and executes the starter-safe
-Lua traces. `make trace-run` executes the full Lua-style trace catalog and is
+`make trace-smoke` builds the local Lua runner and executes the manifest's
+starter-safe Lua traces. `make trace-run` executes the full Lua-style trace catalog and is
 expected to fail on the unmodified skeleton. Both need `pkg-config` and Lua
 development headers. `make trace-json` prints the same official-style trace
 coverage as JSON; it is diagnostic and does not change the local 22-point

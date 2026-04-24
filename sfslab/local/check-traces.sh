@@ -11,14 +11,34 @@ manifest=traces/MANIFEST.tsv
 listed=""
 if [ -f "$manifest" ]; then
     first=1
-    while IFS="$(printf '\t')" read -r id category file purpose; do
+    while IFS="$(printf '\t')" read -r id category file starter_safe starter_status purpose; do
         if [ "$first" = 1 ]; then
             first=0
+            if [ "$id" != "id" ] || [ "$category" != "category" ] ||
+               [ "$file" != "file" ] || [ "$starter_safe" != "starter_safe" ] ||
+               [ "$starter_status" != "starter_status" ]; then
+                echo "trace-check: unexpected manifest header"
+                exit 1
+            fi
             continue
         fi
         if [ -z "$id" ]; then
             continue
         fi
+        case "$starter_safe" in
+            yes | no) ;;
+            *)
+                echo "trace-check: bad starter_safe for $id: $starter_safe"
+                exit 1
+                ;;
+        esac
+        case "$starter_status" in
+            pass | fail) ;;
+            *)
+                echo "trace-check: bad starter_status for $id: $starter_status"
+                exit 1
+                ;;
+        esac
         if [ ! -f "$file" ]; then
             echo "trace-check: manifest file missing: $file"
             exit 1

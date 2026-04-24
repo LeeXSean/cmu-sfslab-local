@@ -1,13 +1,13 @@
-id	category	file	purpose
-A00	A	traces/A/A00_format_mount.lua	format, unmount, mount, unmount
-A01	A	traces/A/A01_open_close_rw.lua	open, write, close, reopen, read
-A02	A	traces/A/A02_getpos.lua	getpos updates after open and write
-A03	A	traces/A/A03_seek.lua	seek clamps and reads from the new position
-A04	A	traces/A/A04_rename.lua	basic rename preserves file data
-B00	B	traces/B/B00_remove_list.lua	remove and list basic files
-B01	B	traces/B/B01_multi_block_seek.lua	seek and read across block boundaries
-B02	B	traces/B/B02_edge_cases.lua	empty files, position tracking, duplicate opens
-B03	B	traces/B/B03_rename_list_edges.lua	overwrite rename updates list state
-C00	C	traces/C/C00_separate_files.lua	independent concurrent file writes
-C01	C	traces/C/C01_read_same_file.lua	concurrent reads of the same file
-C02	C	traces/C/C02_rw_mix_storm.lua	mixed concurrent read/write storm
+id	category	file	starter_safe	starter_status	purpose
+A00	A	traces/A/A00_format_mount.lua	yes	pass	format, unmount, mount, unmount
+A01	A	traces/A/A01_open_close_rw.lua	yes	pass	open, write, close, reopen, read
+A02	A	traces/A/A02_getpos.lua	no	fail	getpos updates after open and write
+A03	A	traces/A/A03_seek.lua	no	fail	seek clamps and reads from the new position
+A04	A	traces/A/A04_rename.lua	no	fail	basic rename preserves file data
+B00	B	traces/B/B00_remove_list.lua	yes	pass	remove and list basic files
+B01	B	traces/B/B01_multi_block_seek.lua	no	fail	seek and read across block boundaries
+B02	B	traces/B/B02_edge_cases.lua	no	fail	empty files, position tracking, duplicate opens
+B03	B	traces/B/B03_rename_list_edges.lua	no	fail	overwrite rename updates list state
+C00	C	traces/C/C00_separate_files.lua	yes	pass	independent concurrent file writes
+C01	C	traces/C/C01_read_same_file.lua	yes	pass	concurrent reads of the same file
+C02	C	traces/C/C02_rw_mix_storm.lua	no	fail	mixed concurrent read/write storm
