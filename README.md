@@ -58,6 +58,9 @@ make trace-check
 make dist
 ```
 
+GitHub Actions runs the same smoke and trace syntax checks on pushes and pull
+requests.
+
 The unmodified skeleton is expected to fail the tests for `sfs_getpos`,
 `sfs_seek`, and `sfs_rename`. Those failures are the starting point of the lab,
 not a packaging bug.
