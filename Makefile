@@ -2,6 +2,7 @@
 
 HANDOUT = sfslab
 DIST = sfslab-handout.tar
+DIST_MTIME = 2024-01-01 00:00Z
 
 .PHONY: all
 all:
@@ -34,4 +35,9 @@ clean:
 .PHONY: dist
 dist:
 	$(MAKE) -C $(HANDOUT) handout-check
-	tar -cf $(DIST) $(HANDOUT)
+	@if tar --version 2>/dev/null | grep -qi 'gnu tar'; then \
+	  tar --sort=name --mtime='$(DIST_MTIME)' \
+	    --owner=0 --group=0 --numeric-owner -cf $(DIST) $(HANDOUT); \
+	else \
+	  tar -cf $(DIST) $(HANDOUT); \
+	fi

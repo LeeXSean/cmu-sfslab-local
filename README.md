@@ -62,6 +62,9 @@ make dist
 GitHub Actions runs the same smoke and trace syntax checks on pushes and pull
 requests.
 
+`make dist` runs the handout checks first and uses reproducible GNU tar flags
+when they are available.
+
 The unmodified skeleton is expected to fail the tests for `sfs_getpos`,
 `sfs_seek`, and `sfs_rename`. Those failures are the starting point of the lab,
 not a packaging bug.
