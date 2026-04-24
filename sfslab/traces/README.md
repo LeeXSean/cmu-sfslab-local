@@ -16,3 +16,6 @@ a clean target for a future Lua runner.
 The helper names used below (`disk.open`, `disk.write`, `check`, `lanes.gen`,
 etc.) follow the course-style trace vocabulary, but this repository does not
 ship a Lua binding yet.
+
+Run `make trace-check` from the handout root to syntax-check these files when
+`luac` is installed. This does not execute SFS operations.

@@ -23,6 +23,8 @@ being runnable without CMU infrastructure.
   ThreadSanitizer runs, and future Lua trace work.
 - `local/SCORING.md` explains why the local score is a self-study signal, not
   an official score prediction.
+- `make smoke`, `make grade`, and `make trace-check` are convenience targets
+  for local validation.
 - `make baseline` writes `.perf_baseline` so performance is scored against the
   current machine instead of CMU's Autolab hardware.
 - ThreadSanitizer is used locally as the race detector when available.

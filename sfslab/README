@@ -43,6 +43,23 @@ Offline-only local tools:
         Builds the local tools. Run `make`, then `make baseline`, then
         `./test-sfs`.
 
+Useful make targets:
+
+    make
+        Build the local checker binaries.
+
+    make test
+        Run the local autograder.
+
+    make grade
+        Recalibrate the local performance baseline, then run the autograder.
+
+    make smoke
+        Build and run the two starter traces that should pass on the skeleton.
+
+    make trace-check
+        Syntax-check Lua-style traces when `luac` is installed.
+
 Read SFS_Lab_Writeup.md for the lab narrative and
 local/OFFLINE_SELF_STUDY.md for the differences between this offline package
 and the course infrastructure. Read local/SCORING.md before treating a local

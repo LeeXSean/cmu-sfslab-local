@@ -51,6 +51,23 @@ baseline: test-sfs-baseline
 	@echo "Baseline (median): $$(head -1 .perf_baseline) ops/sec  ->  .perf_baseline"
 .PHONY: baseline
 
+test: test-sfs
+	./test-sfs
+.PHONY: test
+
+grade: test-sfs test-sfs-baseline
+	$(MAKE) baseline
+	./test-sfs
+.PHONY: grade
+
+smoke: test-sfs
+	./test-sfs -q --smoke-only
+.PHONY: smoke
+
+trace-check:
+	@sh local/check-traces.sh
+.PHONY: trace-check
+
 clean:
 	-rm -f $(PROGRAMS) test-sfs-tsan *.o local/*.o *.img tsan_output.log .perf_baseline .perf_baseline.tmp
 .PHONY: clean

@@ -41,6 +41,15 @@ make baseline
 ./test-sfs
 ```
 
+Helpful targets inside `sfslab/`:
+
+```bash
+make test         # run the local autograder
+make grade        # recalibrate baseline, then run the autograder
+make smoke        # verify the starter traces run cleanly
+make trace-check  # syntax-check Lua-style traces when luac is installed
+```
+
 The unmodified skeleton is expected to fail the tests for `sfs_getpos`,
 `sfs_seek`, and `sfs_rename`. Those failures are the starting point of the lab,
 not a packaging bug.

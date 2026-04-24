@@ -1321,6 +1321,7 @@ int main(int argc, char *argv[])
 
     int mode_tsan_only = 0;
     int mode_perf_only = 0;
+    int mode_smoke_only = 0;
     for (int i = 1; i < argc; i++)
     {
         if (strcmp(argv[i], "-q") == 0 || strcmp(argv[i], "--quiet") == 0)
@@ -1331,6 +1332,8 @@ int main(int argc, char *argv[])
             mode_tsan_only = 1;
         else if (strcmp(argv[i], "--perf-only") == 0)
             mode_perf_only = 1;
+        else if (strcmp(argv[i], "--smoke-only") == 0)
+            mode_smoke_only = 1;
         else
             fprintf(stderr, "warning: unknown argument '%s' (ignored)\n", argv[i]);
     }
@@ -1385,6 +1388,13 @@ int main(int argc, char *argv[])
         {"C01", "read_same_file", trace_C01},
         {"C02", "rw_mix_storm", trace_C02},
     };
+
+    if (mode_smoke_only)
+    {
+        int smoke = run_category("Smoke", cat_a, 2);
+        unlink(DISK_NAME);
+        return (smoke == 2) ? 0 : 1;
+    }
 
     int a = run_category("A (Feature Tests)", cat_a, 5);
     int b = run_category("B (Sequential Correctness)", cat_b, 4);
