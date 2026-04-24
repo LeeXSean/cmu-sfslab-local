@@ -25,7 +25,9 @@ reported separately and is not added to the 22-point local score.
 Run `make report-json` to print both reports in one JSON document.
 Run `make stress` to repeat the C concurrency traces without running the full
 scoreboard; override the loop count with `STRESS_RUNS=N`. A failure here means
-the implementation is not stable under repeated concurrent schedules.
+the implementation is not stable under repeated concurrent schedules. The C
+concurrency traces use isolated disk images so one trace's cleanup path does
+not contaminate the next trace.
 
 ## How To Read The Score
 

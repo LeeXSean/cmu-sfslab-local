@@ -329,6 +329,10 @@ mutex) measured on the same machine via `make baseline`. Let
 If `.perf_baseline` is missing, the grader falls back to the legacy absolute
 ops/sec thresholds and prints a warning telling you to run `make baseline`.
 
+Each Category C trace uses its own disk image and the parent cleans up
+concurrency images after timeout/crash paths, which keeps repeated stress runs
+from inheriting leftover state from the previous trace.
+
 **Deadlock protection:** Each Category C trace runs in a forked child with a
 30-second wall-clock budget; the perf benchmark gets 60 seconds. If a child
 exceeds its budget (e.g. from a deadlock), the parent `SIGKILL`s it and scores

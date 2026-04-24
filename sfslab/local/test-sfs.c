@@ -35,7 +35,10 @@
    SFS_DISK_DIR=/some/path (e.g. SFS_DISK_DIR=/tmp on Docker Desktop
    to keep perf I/O off the bind mount -- see writeup Section 5.4). */
 static const char *DISK_NAME = "test.img";
-static const char *CONC_DISK = "test_conc.img";
+static const char *CONC_DISK_C00 = "test_conc_C00.img";
+static const char *CONC_DISK_C01 = "test_conc_C01.img";
+static const char *CONC_DISK_C02_RW = "test_conc_C02_rw.img";
+static const char *CONC_DISK_C02_STORM = "test_conc_C02_storm.img";
 static const char *PERF_DISK = "test_perf.img";
 
 static char *sfs_join(const char *dir, const char *name)
@@ -57,9 +60,20 @@ static void init_disk_paths(void)
     if (!dir || !*dir)
         return;
     DISK_NAME = sfs_join(dir, "test.img");
-    CONC_DISK = sfs_join(dir, "test_conc.img");
+    CONC_DISK_C00 = sfs_join(dir, "test_conc_C00.img");
+    CONC_DISK_C01 = sfs_join(dir, "test_conc_C01.img");
+    CONC_DISK_C02_RW = sfs_join(dir, "test_conc_C02_rw.img");
+    CONC_DISK_C02_STORM = sfs_join(dir, "test_conc_C02_storm.img");
     PERF_DISK = sfs_join(dir, "test_perf.img");
     fprintf(stderr, "Disk images redirected via SFS_DISK_DIR: %s\n", dir);
+}
+
+static void cleanup_concurrency_disks(void)
+{
+    unlink(CONC_DISK_C00);
+    unlink(CONC_DISK_C01);
+    unlink(CONC_DISK_C02_RW);
+    unlink(CONC_DISK_C02_STORM);
 }
 
 /* ------------------------------------------------------------------ */
@@ -733,7 +747,7 @@ static void *thread_write_own_file(void *arg)
 static int trace_C00(void)
 {
     trace_ok = 1;
-    sfs_format(CONC_DISK, disk_size());
+    sfs_format(CONC_DISK_C00, disk_size());
 
     pthread_t threads[NUM_THREADS];
     int ids[NUM_THREADS];
@@ -761,8 +775,8 @@ static int trace_C00(void)
     CHECK(count == NUM_THREADS, "expected %d files, got %d", NUM_THREADS,
           count);
 
-    unmount_and_check(CONC_DISK);
-    unlink(CONC_DISK);
+    unmount_and_check(CONC_DISK_C00);
+    unlink(CONC_DISK_C00);
     return trace_ok;
 }
 
@@ -785,7 +799,7 @@ static void *thread_read_shared(void *arg)
 static int trace_C01(void)
 {
     trace_ok = 1;
-    sfs_format(CONC_DISK, disk_size());
+    sfs_format(CONC_DISK_C01, disk_size());
 
     int fd = sfs_open("shared.txt");
     sfs_write(fd, "SHARED", 6);
@@ -805,8 +819,8 @@ static int trace_C01(void)
     }
     CHECK(ok, "concurrent reads of same file failed");
 
-    unmount_and_check(CONC_DISK);
-    unlink(CONC_DISK);
+    unmount_and_check(CONC_DISK_C01);
+    unlink(CONC_DISK_C01);
     return trace_ok;
 }
 
@@ -861,7 +875,7 @@ static int trace_C02(void)
     trace_ok = 1;
 
     /* Part 1: r/w mix on separate files */
-    sfs_format(CONC_DISK, disk_size());
+    sfs_format(CONC_DISK_C02_RW, disk_size());
 
     struct rw_mix_arg args[NUM_THREADS];
     pthread_t threads[NUM_THREADS];
@@ -881,11 +895,11 @@ static int trace_C02(void)
             ok = 0;
     }
     CHECK(ok, "concurrent r/w mix failed");
-    unmount_and_check(CONC_DISK);
-    unlink(CONC_DISK);
+    unmount_and_check(CONC_DISK_C02_RW);
+    unlink(CONC_DISK_C02_RW);
 
     /* Part 2: open/close storm on same file */
-    sfs_format(CONC_DISK, disk_size());
+    sfs_format(CONC_DISK_C02_STORM, disk_size());
 
     int fd = sfs_open("storm.txt");
     sfs_write(fd, "x", 1);
@@ -903,8 +917,8 @@ static int trace_C02(void)
         count++;
     CHECK(count == 1, "storm: expected 1 file, got %d", count);
 
-    unmount_and_check(CONC_DISK);
-    unlink(CONC_DISK);
+    unmount_and_check(CONC_DISK_C02_STORM);
+    unlink(CONC_DISK_C02_STORM);
     return trace_ok;
 }
 
@@ -1250,7 +1264,7 @@ static enum tsan_result run_tsan_check(void)
     }
 
     unlink(tsan_log);
-    unlink(CONC_DISK);
+    cleanup_concurrency_disks();
 
     if (race_found)
     {
@@ -1410,7 +1424,7 @@ static int run_trace_with_timeout(const char *id, trace_fn fn,
     {
         kill(pid, SIGKILL);
         waitpid(pid, &status, 0);
-        unlink(CONC_DISK);
+        cleanup_concurrency_disks();
         /* Drain anything the child managed to emit before the kill. */
         char tmp2[4096];
         for (;;)
@@ -1440,9 +1454,13 @@ static int run_trace_with_timeout(const char *id, trace_fn fn,
     close(pfd[0]);
 
     if (WIFEXITED(status))
+    {
+        cleanup_concurrency_disks();
         return WEXITSTATUS(status) == 0 ? 1 : 0;
+    }
     if (WIFSIGNALED(status))
     {
+        cleanup_concurrency_disks();
         char msg[96];
         int m = snprintf(msg, sizeof msg,
                          "       -> CRASH: trace %s killed by signal %d\n",
@@ -1450,6 +1468,7 @@ static int run_trace_with_timeout(const char *id, trace_fn fn,
         if (m > 0) capture_append(out_buf, &cap, out_len, msg, (size_t)m);
         return 0;
     }
+    cleanup_concurrency_disks();
     return 0;
 }
 
@@ -1576,7 +1595,7 @@ int main(int argc, char *argv[])
         quiet_mode = 1;
         int c = run_category("C (TSan)", cat_c, 3);
         unlink(DISK_NAME);
-        unlink(CONC_DISK);
+        cleanup_concurrency_disks();
         return (c == 3) ? 0 : 66;
     }
 
@@ -1650,7 +1669,7 @@ int main(int argc, char *argv[])
     {
         int c = run_category("C (Concurrent Correctness)", cat_c, 3);
         unlink(DISK_NAME);
-        unlink(CONC_DISK);
+        cleanup_concurrency_disks();
         return (c == 3) ? 0 : 1;
     }
 
