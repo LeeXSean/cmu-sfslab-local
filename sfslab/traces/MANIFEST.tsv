@@ -1,0 +1,8 @@
+id	category	file	purpose
+A02	A	traces/A/A02_getpos.lua	getpos updates after open and write
+A03	A	traces/A/A03_seek.lua	seek clamps and reads from the new position
+A04	A	traces/A/A04_rename.lua	basic rename preserves file data
+B01	B	traces/B/B01_multi_block_seek.lua	seek and read across block boundaries
+B03	B	traces/B/B03_rename_list_edges.lua	overwrite rename updates list state
+C00	C	traces/C/C00_separate_files.lua	independent concurrent file writes
+C02	C	traces/C/C02_rw_mix_storm.lua	mixed concurrent read/write storm

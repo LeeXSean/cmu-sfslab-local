@@ -12,6 +12,7 @@ a clean target for a future Lua runner.
 - `A/`: single-threaded feature tests.
 - `B/`: sequential versions of more complex operations.
 - `C/`: concurrent versions of related operations.
+- `MANIFEST.tsv`: trace id, category, file path, and purpose.
 
 The helper names used below (`disk.open`, `disk.write`, `check`, `lanes.gen`,
 etc.) follow the course-style trace vocabulary, but this repository does not
