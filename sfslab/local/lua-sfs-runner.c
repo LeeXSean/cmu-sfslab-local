@@ -11,7 +11,7 @@
 
 static int push_status(lua_State *L, int status)
 {
-    lua_pushinteger(L, status);
+    lua_pushinteger(L, (lua_Integer)status);
     return 1;
 }
 
@@ -51,7 +51,7 @@ static int l_disk_write(lua_State *L)
     int fd = (int)luaL_checkinteger(L, 1);
     size_t len = 0;
     const char *buf = luaL_checklstring(L, 2, &len);
-    lua_pushinteger(L, sfs_write(fd, buf, len));
+    lua_pushinteger(L, (lua_Integer)sfs_write(fd, buf, len));
     return 1;
 }
 
@@ -67,7 +67,7 @@ static int l_disk_read(lua_State *L)
     if (nread < 0)
     {
         free(buf);
-        lua_pushinteger(L, nread);
+        lua_pushinteger(L, (lua_Integer)nread);
         return 1;
     }
 
@@ -79,7 +79,7 @@ static int l_disk_read(lua_State *L)
 static int l_disk_getpos(lua_State *L)
 {
     int fd = (int)luaL_checkinteger(L, 1);
-    lua_pushinteger(L, sfs_getpos(fd));
+    lua_pushinteger(L, (lua_Integer)sfs_getpos(fd));
     return 1;
 }
 
@@ -87,7 +87,7 @@ static int l_disk_seek(lua_State *L)
 {
     int fd = (int)luaL_checkinteger(L, 1);
     ssize_t delta = (ssize_t)luaL_checkinteger(L, 2);
-    lua_pushinteger(L, sfs_seek(fd, delta));
+    lua_pushinteger(L, (lua_Integer)sfs_seek(fd, delta));
     return 1;
 }
 
@@ -107,7 +107,7 @@ static int l_disk_remove(lua_State *L)
 static int l_list_iter(lua_State *L)
 {
     int idx = (int)lua_tointeger(L, lua_upvalueindex(2)) + 1;
-    lua_pushinteger(L, idx);
+    lua_pushinteger(L, (lua_Integer)idx);
     lua_replace(L, lua_upvalueindex(2));
 
     lua_rawgeti(L, lua_upvalueindex(1), idx);
@@ -135,7 +135,7 @@ static int l_disk_list(lua_State *L)
             return 1;
         }
         lua_pushstring(L, name);
-        lua_rawseti(L, -2, idx++);
+        lua_rawseti(L, -2, (lua_Integer)idx++);
     }
 
     lua_pushinteger(L, 0);
