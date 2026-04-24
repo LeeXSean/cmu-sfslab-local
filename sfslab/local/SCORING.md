@@ -22,10 +22,11 @@ Run `make report-json` to print both reports in one JSON document.
 ## How To Read The Score
 
 Prioritize correctness first. A fast implementation with failing A/B/C traces
-is not useful. ThreadSanitizer runs after all C traces pass; if it reports a
-race, the C score is set to zero. Use the performance score only after the
-implementation is stable under the sequential tests, concurrent traces, and
-ThreadSanitizer.
+is not useful. ThreadSanitizer runs after all C traces pass; the JSON report
+records `tsan_status` as `clean`, `race_detected`, `trace_failed`, `timeout`,
+`skipped`, or `unavailable`. A race, trace failure, or timeout sets the C score
+to zero. Use the performance score only after the implementation is stable
+under the sequential tests, concurrent traces, and ThreadSanitizer.
 
 The performance score compares your implementation to the local
 `sfs-baseline-ref.c` coarse-lock implementation on the same machine. It is

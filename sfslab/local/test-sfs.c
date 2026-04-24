@@ -1032,7 +1032,44 @@ static int run_perf_benchmark(void)
 /*  ThreadSanitizer race detection (auto-compiled and run)             */
 /* ================================================================== */
 
-static int run_tsan_check(void)
+enum tsan_result
+{
+    TSAN_SKIPPED,
+    TSAN_CLEAN,
+    TSAN_RACE,
+    TSAN_TRACE_FAILED,
+    TSAN_UNAVAILABLE,
+    TSAN_TIMEOUT,
+};
+
+static const char *tsan_result_name(enum tsan_result result)
+{
+    switch (result)
+    {
+    case TSAN_SKIPPED: return "skipped";
+    case TSAN_CLEAN: return "clean";
+    case TSAN_RACE: return "race_detected";
+    case TSAN_TRACE_FAILED: return "trace_failed";
+    case TSAN_UNAVAILABLE: return "unavailable";
+    case TSAN_TIMEOUT: return "timeout";
+    }
+    return "unknown";
+}
+
+static int tsan_result_ran(enum tsan_result result)
+{
+    return result == TSAN_CLEAN || result == TSAN_RACE ||
+           result == TSAN_TRACE_FAILED || result == TSAN_TIMEOUT;
+}
+
+static const char *tsan_clean_json(enum tsan_result result)
+{
+    if (result == TSAN_CLEAN) return "true";
+    if (tsan_result_ran(result)) return "false";
+    return "null";
+}
+
+static enum tsan_result run_tsan_check(void)
 {
     printf("\nRace Detection (ThreadSanitizer):\n");
 
@@ -1050,12 +1087,12 @@ static int run_tsan_check(void)
     {
         printf("  (skipped -- TSan compilation failed, gcc may not support "
                "-fsanitize=thread)\n");
-        return 1; // don't penalize if TSan unavailable
+        return TSAN_UNAVAILABLE; // don't penalize if TSan unavailable
     }
 
     char run_cmd[512];
     snprintf(run_cmd, sizeof run_cmd,
-             "%s --tsan-only > %s 2>&1",
+             "timeout 60s %s --tsan-only > %s 2>&1",
              tsan_bin, tsan_log);
 
     rc = system(run_cmd);
@@ -1084,17 +1121,23 @@ static int run_tsan_check(void)
     {
         printf("  DATA RACE DETECTED -- Category C score set to 0\n");
         printf("  Race stacks were suppressed; SFS_Lab_Writeup.md shows how to rerun TSan to print them.\n");
-        return 0;
+        return TSAN_RACE;
+    }
+
+    if (WIFEXITED(rc) && WEXITSTATUS(rc) == 124)
+    {
+        printf("  TSan run timed out -- Category C score set to 0\n");
+        return TSAN_TIMEOUT;
     }
 
     if ((WIFEXITED(rc) && WEXITSTATUS(rc) != 0) || WIFSIGNALED(rc))
     {
         printf("  Sanitized C traces failed -- Category C score set to 0\n");
-        return 0;
+        return TSAN_TRACE_FAILED;
     }
 
     printf("  No races detected                          PASS\n");
-    return 1;
+    return TSAN_CLEAN;
 }
 
 /* ================================================================== */
@@ -1392,10 +1435,10 @@ int main(int argc, char *argv[])
             {"C01", "read_same_file", trace_C01},
             {"C02", "rw_mix_storm", trace_C02},
         };
-        int c = 0;
-        for (int i = 0; i < 3; i++)
-            c += cat_c[i].fn();
+        quiet_mode = 1;
+        int c = run_category("C (TSan)", cat_c, 3);
         unlink(DISK_NAME);
+        unlink(CONC_DISK);
         return (c == 3) ? 0 : 66;
     }
 
@@ -1470,19 +1513,16 @@ int main(int argc, char *argv[])
     int c = run_category("C (Concurrent Correctness)", cat_c, 3);
 
     /* TSan race detection: if races found, C score becomes 0 */
-    int tsan_ok = 1;
-    int tsan_ran = 0;
+    enum tsan_result tsan = TSAN_SKIPPED;
     if (c == 3)
-    {
-        tsan_ran = 1;
-        tsan_ok = run_tsan_check();
-    }
+        tsan = run_tsan_check();
     else
     {
         printf("\nRace Detection (ThreadSanitizer):\n");
         printf("  (skipped -- concurrent correctness traces must all pass first)\n");
     }
-    if (tsan_ran && !tsan_ok)
+    if (tsan == TSAN_RACE || tsan == TSAN_TRACE_FAILED ||
+        tsan == TSAN_TIMEOUT)
         c = 0;
 
     int correctness = a + b + c;
@@ -1576,8 +1616,9 @@ int main(int argc, char *argv[])
         printf("  \"categories\": {\n");
         printf("    \"A\": {\"score\": %d, \"max\": 5},\n", a);
         printf("    \"B\": {\"score\": %d, \"max\": 4},\n", b);
-        printf("    \"C\": {\"score\": %d, \"max\": 3, \"tsan_ran\": %s, \"tsan_clean\": %s}\n",
-               c, tsan_ran ? "true" : "false", tsan_ok ? "true" : "false");
+        printf("    \"C\": {\"score\": %d, \"max\": 3, \"tsan_ran\": %s, \"tsan_clean\": %s, \"tsan_status\": \"%s\"}\n",
+               c, tsan_result_ran(tsan) ? "true" : "false",
+               tsan_clean_json(tsan), tsan_result_name(tsan));
         printf("  },\n");
         printf("  \"performance\": {\"score\": %d, \"max\": 10, \"ran\": %s},\n",
                perf, perf_ran ? "true" : "false");
