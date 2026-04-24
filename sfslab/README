@@ -51,6 +51,10 @@ Useful make targets:
     make test
         Run the local autograder.
 
+    make json
+        Print the local autograder score as JSON. Exits nonzero when
+        correctness fails.
+
     make grade
         Recalibrate the local performance baseline, then run the autograder.
 

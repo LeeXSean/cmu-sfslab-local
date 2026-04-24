@@ -1315,6 +1315,42 @@ static int run_category(const char *label, struct trace_entry *traces, int n)
     return passed;
 }
 
+static int silence_stdout(int *saved_stdout)
+{
+    fflush(stdout);
+    *saved_stdout = dup(STDOUT_FILENO);
+    if (*saved_stdout < 0)
+        return -1;
+
+    int devnull = open("/dev/null", O_WRONLY);
+    if (devnull < 0)
+    {
+        close(*saved_stdout);
+        *saved_stdout = -1;
+        return -1;
+    }
+
+    if (dup2(devnull, STDOUT_FILENO) < 0)
+    {
+        close(devnull);
+        close(*saved_stdout);
+        *saved_stdout = -1;
+        return -1;
+    }
+    close(devnull);
+    return 0;
+}
+
+static void restore_stdout(int saved_stdout)
+{
+    fflush(stdout);
+    if (saved_stdout >= 0)
+    {
+        dup2(saved_stdout, STDOUT_FILENO);
+        close(saved_stdout);
+    }
+}
+
 int main(int argc, char *argv[])
 {
     init_disk_paths();
@@ -1323,6 +1359,7 @@ int main(int argc, char *argv[])
     int mode_perf_only = 0;
     int mode_smoke_only = 0;
     int mode_list_traces = 0;
+    int mode_json = 0;
     for (int i = 1; i < argc; i++)
     {
         if (strcmp(argv[i], "-q") == 0 || strcmp(argv[i], "--quiet") == 0)
@@ -1337,6 +1374,8 @@ int main(int argc, char *argv[])
             mode_smoke_only = 1;
         else if (strcmp(argv[i], "--list-traces") == 0)
             mode_list_traces = 1;
+        else if (strcmp(argv[i], "--json") == 0)
+            mode_json = 1;
         else
             fprintf(stderr, "warning: unknown argument '%s' (ignored)\n", argv[i]);
     }
@@ -1401,6 +1440,17 @@ int main(int argc, char *argv[])
         return 0;
     }
 
+    int saved_stdout = -1;
+    if (mode_json)
+    {
+        quiet_mode = 1;
+        if (silence_stdout(&saved_stdout) != 0)
+        {
+            fprintf(stderr, "warning: could not silence stdout for JSON mode\n");
+            saved_stdout = -1;
+        }
+    }
+
     printf("========================================\n");
     printf("        SFS Lab Autograder\n");
     printf("========================================\n");
@@ -1428,6 +1478,7 @@ int main(int argc, char *argv[])
 
     printf("\nPerformance:\n");
     int perf = 0;
+    int perf_ran = 0;
     if (correctness < 12)
     {
         printf("  (skipped -- correctness tests must all pass first)\n");
@@ -1435,6 +1486,7 @@ int main(int argc, char *argv[])
     }
     else
     {
+        perf_ran = 1;
         /* Perf benchmark also needs deadlock protection -- 60s budget
            (longer than a Category C trace because slower machines may
            legitimately take more time on the full workload). */
@@ -1503,5 +1555,24 @@ int main(int argc, char *argv[])
     printf("========================================\n");
 
     unlink(DISK_NAME);
+    if (mode_json)
+    {
+        restore_stdout(saved_stdout);
+        printf("{\n");
+        printf("  \"correctness\": {\"score\": %d, \"max\": 12},\n",
+               correctness);
+        printf("  \"categories\": {\n");
+        printf("    \"A\": {\"score\": %d, \"max\": 5},\n", a);
+        printf("    \"B\": {\"score\": %d, \"max\": 4},\n", b);
+        printf("    \"C\": {\"score\": %d, \"max\": 3, \"tsan_clean\": %s}\n",
+               c, tsan_ok ? "true" : "false");
+        printf("  },\n");
+        printf("  \"performance\": {\"score\": %d, \"max\": 10, \"ran\": %s},\n",
+               perf, perf_ran ? "true" : "false");
+        printf("  \"total\": {\"score\": %d, \"max\": 22},\n", total);
+        printf("  \"style\": {\"max\": 4, \"manual\": true},\n");
+        printf("  \"passed\": %s\n", correctness == 12 ? "true" : "false");
+        printf("}\n");
+    }
     return (correctness == 12) ? 0 : 1;
 }

@@ -55,6 +55,10 @@ test: test-sfs
 	./test-sfs
 .PHONY: test
 
+json: test-sfs
+	./test-sfs --json
+.PHONY: json
+
 grade: test-sfs test-sfs-baseline
 	$(MAKE) baseline
 	./test-sfs

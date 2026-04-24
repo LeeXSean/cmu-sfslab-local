@@ -13,6 +13,7 @@ The local score is a self-study signal, not an Autolab prediction.
 Performance only runs after all correctness traces pass.
 
 Run `make trace-list` to print the current local autograder items.
+Run `make json` to print a machine-readable score summary.
 
 ## How To Read The Score
 

@@ -12,6 +12,10 @@ all:
 test:
 	$(MAKE) -C $(HANDOUT) test
 
+.PHONY: json
+json:
+	$(MAKE) -C $(HANDOUT) json
+
 .PHONY: grade
 grade:
 	$(MAKE) -C $(HANDOUT) grade
