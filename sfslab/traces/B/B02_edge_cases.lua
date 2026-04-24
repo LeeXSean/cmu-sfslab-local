@@ -4,7 +4,10 @@ local fd = check(disk.open("empty.txt"))
 assert(check(disk.read(fd, 64)) == "")
 assert(check(disk.getPos(fd)) == 0)
 assert(check(disk.seek(fd, 100)) == 0)
+assert(check(disk.seek(fd, -100)) == 0)
 disk.close(fd)
+
+assert(disk.open(string.rep("x", 31)) == errno.ENAMETOOLONG)
 
 fd = check(disk.open("track.txt"))
 assert(check(disk.write(fd, "0123456789abcdef")) == 16)
@@ -25,5 +28,12 @@ assert(check(disk.getPos(fd1)) == 12)
 assert(check(disk.getPos(fd2)) == 5)
 disk.close(fd1)
 disk.close(fd2)
+
+fd = check(disk.open("boundary.txt"))
+assert(check(disk.write(fd, string.rep("Z", 500))) == 500)
+assert(check(disk.getPos(fd)) == 500)
+assert(check(disk.seek(fd, -500)) == 0)
+assert(check(disk.read(fd, 3)) == "ZZZ")
+disk.close(fd)
 
 assert(check(disk.unmount()) == 0)

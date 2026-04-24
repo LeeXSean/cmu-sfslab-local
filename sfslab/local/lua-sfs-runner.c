@@ -120,12 +120,17 @@ static int l_disk_list(lua_State *L)
 {
     sfs_list_cookie cookie = NULL;
     char name[SFS_FILE_NAME_SIZE_LIMIT];
+    lua_Integer requested = luaL_optinteger(
+        L, 1, (lua_Integer)sizeof name);
+    size_t name_space = requested < 0 ? 0 : (size_t)requested;
+    if (name_space > sizeof name)
+        name_space = sizeof name;
     int idx = 1;
 
     lua_newtable(L);
     for (;;)
     {
-        int status = sfs_list(&cookie, name, sizeof name);
+        int status = sfs_list(&cookie, name, name_space);
         if (status == 1)
             break;
         if (status < 0)
@@ -162,6 +167,22 @@ static void register_disk(lua_State *L)
     };
     luaL_newlib(L, funcs);
     lua_setglobal(L, "disk");
+}
+
+static void set_errno_const(lua_State *L, const char *name, int value)
+{
+    lua_pushinteger(L, (lua_Integer)-value);
+    lua_setfield(L, -2, name);
+}
+
+static void register_errno_table(lua_State *L)
+{
+    lua_newtable(L);
+    set_errno_const(L, "EBADF", EBADF);
+    set_errno_const(L, "EINVAL", EINVAL);
+    set_errno_const(L, "ENOENT", ENOENT);
+    set_errno_const(L, "ENAMETOOLONG", ENAMETOOLONG);
+    lua_setglobal(L, "errno");
 }
 
 static void install_prelude(lua_State *L)
@@ -205,6 +226,7 @@ static int run_trace(const char *path)
 
     luaL_openlibs(L);
     register_disk(L);
+    register_errno_table(L);
     install_prelude(L);
 
     int rc = luaL_dofile(L, path);
