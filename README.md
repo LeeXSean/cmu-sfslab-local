@@ -50,6 +50,14 @@ make smoke        # verify the starter traces run cleanly
 make trace-check  # syntax-check Lua-style traces when luac is installed
 ```
 
+The repository root also forwards common targets:
+
+```bash
+make smoke
+make trace-check
+make dist
+```
+
 The unmodified skeleton is expected to fail the tests for `sfs_getpos`,
 `sfs_seek`, and `sfs_rename`. Those failures are the starting point of the lab,
 not a packaging bug.
