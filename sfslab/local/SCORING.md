@@ -23,11 +23,14 @@ Run `make trace-json` to print machine-readable Lua trace coverage. Lua trace
 coverage is useful for comparing against the official trace style, but it is
 reported separately and is not added to the 22-point local score.
 Run `make report-json` to print both reports in one JSON document.
+Run `make starter-safe` to check that the packaged starter and starter-safe
+trace subset still run. This is the package health check; it is not a score.
 Run `make stress` to repeat the C concurrency traces without running the full
 scoreboard; override the loop count with `STRESS_RUNS=N`. A failure here means
-the implementation is not stable under repeated concurrent schedules. The C
-concurrency traces use isolated disk images so one trace's cleanup path does
-not contaminate the next trace.
+the implementation is not stable under repeated concurrent schedules. `stress`
+is for testing an implementation after you start fixing concurrency, not for
+proving that the starter is complete. The C concurrency traces use isolated disk
+images so one trace's cleanup path does not contaminate the next trace.
 
 ## How To Read The Score
 

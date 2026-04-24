@@ -19,6 +19,9 @@ being runnable without CMU infrastructure.
   performance calibration.
 - `traces/` contains Lua-style trace fixtures for documentation and future
   runner work.
+- `make starter-safe` is the starter health check: it runs the C smoke traces
+  and, when the Lua development dependencies are available, the starter-safe
+  Lua traces.
 - `make trace-smoke` executes the starter-safe Lua traces. `make trace-run`
   executes the full Lua-style catalog and is expected to fail on the
   unmodified skeleton. The local binding includes a synchronous fallback for
@@ -37,7 +40,8 @@ being runnable without CMU infrastructure.
 - `make smoke`, `make grade`, and `make trace-check` are convenience targets
   for local validation.
 - `make stress` repeats the C concurrency traces to expose nondeterministic
-  failures without running the whole scoreboard each time.
+  failures after you have an implementation to test; it is not a starter health
+  check.
 - `make baseline` writes `.perf_baseline` so performance is scored against the
   current machine instead of CMU's Autolab hardware.
 - ThreadSanitizer is used locally as the race detector when available.

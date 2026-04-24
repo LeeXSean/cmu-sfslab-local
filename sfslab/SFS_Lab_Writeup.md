@@ -97,6 +97,13 @@ Before you implement anything, you should see failures for `sfs_getpos`, `sfs_se
 See Section 5.1 for output-verbosity knobs (`-v` for full FAIL detail, `-q` for
 scoreboard only).
 
+If you only want to confirm that the offline package and starter-safe subset are
+healthy, run:
+
+```bash
+make starter-safe
+```
+
 You can also check a disk image for structural consistency:
 
 ```bash
@@ -332,6 +339,10 @@ ops/sec thresholds and prints a warning telling you to run `make baseline`.
 Each Category C trace uses its own disk image and the parent cleans up
 concurrency images after timeout/crash paths, which keeps repeated stress runs
 from inheriting leftover state from the previous trace.
+
+`make stress` is for testing an implementation after you start fixing
+concurrency. It is stricter than the starter health check, and the unmodified
+skeleton may fail it.
 
 **Deadlock protection:** Each Category C trace runs in a forked child with a
 30-second wall-clock budget; the perf benchmark gets 60 seconds. If a child

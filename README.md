@@ -49,6 +49,7 @@ make test         # run the local autograder
 make json         # print the local autograder score as JSON
 make grade        # recalibrate baseline, then run the autograder
 make smoke        # verify the starter traces run cleanly
+make starter-safe # run starter-safe C checks and optional Lua traces
 make trace-check  # syntax-check Lua-style traces when luac is installed
 ```
 
@@ -56,6 +57,7 @@ The repository root also forwards common targets:
 
 ```bash
 make smoke
+make starter-safe
 make stress
 make check
 make json
@@ -65,6 +67,7 @@ make trace-smoke
 make trace-run
 make trace-json
 make docker-check
+make docker-starter-safe
 make docker-stress
 make docker-report-json
 make docker-trace-smoke
@@ -83,6 +86,11 @@ requests.
 `make dist` runs the handout, starter, and manifest checks first, then uses
 reproducible GNU tar flags when they are available.
 
+`make starter-safe` is the starter health check: it runs the C smoke traces and
+then runs the manifest's starter-safe Lua traces when the local Lua development
+dependencies are available. Missing Lua dependencies are reported as a skip, not
+as a starter failure.
+
 `make json` exits nonzero when correctness fails, just like `make test`; the
 JSON is still written to stdout.
 
@@ -94,9 +102,9 @@ right. The failure detail includes the first captured checker diagnostic.
 official-style Lua trace coverage. The local autograder remains the graded
 22-point score; trace coverage is diagnostic.
 
-`make stress` repeats the C concurrency traces and is expected to fail on
-implementations with nondeterministic concurrency bugs. The unmodified skeleton
-may fail this target.
+`make stress` repeats the C concurrency traces. It is an implementation
+stability tool, not a starter health check; the unmodified skeleton may fail it
+because its concurrency path is intentionally not fixed yet.
 
 `make trace-smoke` builds the local Lua runner and executes the manifest's
 starter-safe Lua traces. `make trace-run` executes the full Lua-style trace catalog and is
@@ -126,6 +134,7 @@ The root Makefile wraps the same container flow:
 
 ```bash
 make docker-check
+make docker-starter-safe
 make docker-stress
 make docker-report-json
 make docker-trace-smoke

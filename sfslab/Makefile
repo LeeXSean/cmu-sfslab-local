@@ -73,6 +73,14 @@ smoke: test-sfs sfs-fsck
 	./test-sfs -q --smoke-only
 .PHONY: smoke
 
+starter-safe: starter-check smoke
+	@if sh local/build-lua-runner.sh >/dev/null 2>&1; then \
+	  sh local/run-lua-traces.sh --starter-safe; \
+	else \
+	  echo "starter-safe: Lua runner unavailable; skipping Lua starter-safe traces"; \
+	fi
+.PHONY: starter-safe
+
 stress: test-sfs sfs-fsck
 	@i=1; while [ $$i -le $(STRESS_RUNS) ]; do \
 	  printf "stress run %d/%d\n" $$i $(STRESS_RUNS); \

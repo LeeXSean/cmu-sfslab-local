@@ -31,6 +31,10 @@ grade:
 smoke:
 	$(MAKE) -C $(HANDOUT) smoke
 
+.PHONY: starter-safe
+starter-safe:
+	$(MAKE) -C $(HANDOUT) starter-safe
+
 .PHONY: stress
 stress:
 	$(MAKE) -C $(HANDOUT) stress
@@ -104,6 +108,10 @@ docker-shell: docker-image
 .PHONY: docker-check
 docker-check: docker-image
 	$(DOCKER_RUN) sh -c 'make clean && make check'
+
+.PHONY: docker-starter-safe
+docker-starter-safe: docker-image
+	$(DOCKER_RUN) sh -c 'make clean && make starter-safe'
 
 .PHONY: docker-stress
 docker-stress: docker-image

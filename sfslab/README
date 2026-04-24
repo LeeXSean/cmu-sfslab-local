@@ -61,6 +61,10 @@ Useful make targets:
     make smoke
         Build and run the two starter traces that should pass on the skeleton.
 
+    make starter-safe
+        Run the starter-safe C smoke checks and, when Lua development
+        dependencies are installed, the starter-safe Lua traces.
+
     make check
         Run smoke, trace-check, handout-check, and starter-check.
 
