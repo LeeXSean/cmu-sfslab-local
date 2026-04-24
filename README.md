@@ -57,6 +57,7 @@ make smoke
 make check
 make trace-check
 make trace-list
+make manifest-check
 make handout-check
 make starter-check
 make dist

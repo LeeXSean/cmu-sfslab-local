@@ -20,3 +20,6 @@ ship a Lua binding yet.
 
 Run `make trace-check` from the handout root to syntax-check these files when
 `luac` is installed. This does not execute SFS operations.
+
+Run `make manifest-check` to compare `MANIFEST.tsv` with the local autograder's
+current trace list.

@@ -64,7 +64,7 @@ smoke: test-sfs
 	./test-sfs -q --smoke-only
 .PHONY: smoke
 
-check: handout-check starter-check trace-check smoke
+check: handout-check starter-check trace-check manifest-check smoke
 .PHONY: check
 
 trace-check:
@@ -74,6 +74,10 @@ trace-check:
 trace-list: test-sfs
 	./test-sfs --list-traces
 .PHONY: trace-list
+
+manifest-check: test-sfs
+	@sh local/manifest-check.sh
+.PHONY: manifest-check
 
 handout-check:
 	@sh local/handout-check.sh

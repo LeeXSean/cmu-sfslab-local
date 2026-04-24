@@ -32,6 +32,10 @@ trace-check:
 trace-list:
 	$(MAKE) -C $(HANDOUT) trace-list
 
+.PHONY: manifest-check
+manifest-check:
+	$(MAKE) -C $(HANDOUT) manifest-check
+
 .PHONY: handout-check
 handout-check:
 	$(MAKE) -C $(HANDOUT) handout-check

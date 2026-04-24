@@ -66,6 +66,9 @@ Useful make targets:
     make trace-list
         Print the local autograder traces and point values as TSV.
 
+    make manifest-check
+        Compare traces/MANIFEST.tsv with the local autograder trace list.
+
     make handout-check
         Check that the handout has required files and no generated artifacts.
 
