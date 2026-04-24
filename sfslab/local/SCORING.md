@@ -1,0 +1,30 @@
+# Local Scoring
+
+The local score is a self-study signal, not an Autolab prediction.
+
+## Current Weights
+
+- Feature tests: 5 points
+- Sequential correctness: 4 points
+- Concurrent correctness: 3 points
+- Performance: 10 points
+- Style: manual, up to 4 points
+
+Performance only runs after all correctness traces pass.
+
+## How To Read The Score
+
+Prioritize correctness first. A fast implementation with failing A/B/C traces
+is not useful. Use the performance score only after the implementation is
+stable under the sequential tests, concurrent traces, and ThreadSanitizer.
+
+The performance score compares your implementation to the local
+`sfs-baseline-ref.c` coarse-lock implementation on the same machine. It is
+useful for tracking progress on one setup, but it is still affected by Docker,
+WSL, filesystem latency, scheduler noise, and CPU load.
+
+## Future Work
+
+- Add more A/B/C traces before adding more performance thresholds.
+- Add a Lua runner so `traces/` can become executable fixtures.
+- Keep the local score separate from any official course score.

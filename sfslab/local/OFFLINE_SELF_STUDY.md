@@ -21,6 +21,8 @@ being runnable without CMU infrastructure.
   runner work. They are not executed by the current local grader.
 - The repository root `Dockerfile` provides a Linux toolchain for builds,
   ThreadSanitizer runs, and future Lua trace work.
+- `local/SCORING.md` explains why the local score is a self-study signal, not
+  an official score prediction.
 - `make baseline` writes `.perf_baseline` so performance is scored against the
   current machine instead of CMU's Autolab hardware.
 - ThreadSanitizer is used locally as the race detector when available.
