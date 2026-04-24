@@ -19,6 +19,8 @@ being runnable without CMU infrastructure.
   performance calibration.
 - `traces/` contains Lua-style trace fixtures for documentation and future
   runner work. They are not executed by the current local grader.
+- The repository root `Dockerfile` provides a Linux toolchain for builds,
+  ThreadSanitizer runs, and future Lua trace work.
 - `make baseline` writes `.perf_baseline` so performance is scored against the
   current machine instead of CMU's Autolab hardware.
 - ThreadSanitizer is used locally as the race detector when available.

@@ -45,6 +45,13 @@ The unmodified skeleton is expected to fail the tests for `sfs_getpos`,
 `sfs_seek`, and `sfs_rename`. Those failures are the starting point of the lab,
 not a packaging bug.
 
+Docker works too:
+
+```bash
+docker build -t sfslab-offline .
+docker run --rm -it -v "$PWD:/work" -w /work/sfslab sfslab-offline
+```
+
 ## What Is Local-Only
 
 CMU's course infrastructure uses Autolab and internal race/concurrency tooling.
