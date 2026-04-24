@@ -1077,9 +1077,6 @@ static int run_tsan_check(void)
         fclose(f);
     }
 
-    if (!race_found && WIFEXITED(rc) && WEXITSTATUS(rc) != 0)
-        race_found = 1;
-
     unlink(tsan_log);
     unlink(CONC_DISK);
 
@@ -1087,6 +1084,12 @@ static int run_tsan_check(void)
     {
         printf("  DATA RACE DETECTED -- Category C score set to 0\n");
         printf("  Race stacks were suppressed; SFS_Lab_Writeup.md shows how to rerun TSan to print them.\n");
+        return 0;
+    }
+
+    if ((WIFEXITED(rc) && WEXITSTATUS(rc) != 0) || WIFSIGNALED(rc))
+    {
+        printf("  Sanitized C traces failed -- Category C score set to 0\n");
         return 0;
     }
 
@@ -1468,9 +1471,18 @@ int main(int argc, char *argv[])
 
     /* TSan race detection: if races found, C score becomes 0 */
     int tsan_ok = 1;
-    if (c > 0)
+    int tsan_ran = 0;
+    if (c == 3)
+    {
+        tsan_ran = 1;
         tsan_ok = run_tsan_check();
-    if (!tsan_ok)
+    }
+    else
+    {
+        printf("\nRace Detection (ThreadSanitizer):\n");
+        printf("  (skipped -- concurrent correctness traces must all pass first)\n");
+    }
+    if (tsan_ran && !tsan_ok)
         c = 0;
 
     int correctness = a + b + c;
@@ -1564,8 +1576,8 @@ int main(int argc, char *argv[])
         printf("  \"categories\": {\n");
         printf("    \"A\": {\"score\": %d, \"max\": 5},\n", a);
         printf("    \"B\": {\"score\": %d, \"max\": 4},\n", b);
-        printf("    \"C\": {\"score\": %d, \"max\": 3, \"tsan_clean\": %s}\n",
-               c, tsan_ok ? "true" : "false");
+        printf("    \"C\": {\"score\": %d, \"max\": 3, \"tsan_ran\": %s, \"tsan_clean\": %s}\n",
+               c, tsan_ran ? "true" : "false", tsan_ok ? "true" : "false");
         printf("  },\n");
         printf("  \"performance\": {\"score\": %d, \"max\": 10, \"ran\": %s},\n",
                perf, perf_ran ? "true" : "false");
