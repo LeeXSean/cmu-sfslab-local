@@ -21,5 +21,10 @@ jobs:
       - name: Run Lua trace smoke
         run: make trace-smoke
 
+      - name: Check JSON report
+        run: |
+          make report-json > report.json || true
+          python3 -m json.tool report.json > /dev/null
+
       - name: Build dist tarball
         run: make dist
