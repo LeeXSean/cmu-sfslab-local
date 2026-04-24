@@ -179,6 +179,7 @@ static void register_errno_table(lua_State *L)
 {
     lua_newtable(L);
     set_errno_const(L, "EBADF", EBADF);
+    set_errno_const(L, "EBUSY", EBUSY);
     set_errno_const(L, "EINVAL", EINVAL);
     set_errno_const(L, "ENOENT", ENOENT);
     set_errno_const(L, "ENAMETOOLONG", ENAMETOOLONG);

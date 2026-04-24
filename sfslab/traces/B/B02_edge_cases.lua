@@ -7,6 +7,15 @@ assert(check(disk.seek(fd, 100)) == 0)
 assert(check(disk.seek(fd, -100)) == 0)
 disk.close(fd)
 
+assert(disk.read(fd, 1) == errno.EBADF)
+assert(disk.write(fd, "x") == errno.EBADF)
+assert(disk.getPos(fd) == errno.EBADF)
+assert(disk.seek(fd, 0) == errno.EBADF)
+disk.close(fd)
+
+assert(disk.read(-1, 1) == errno.EBADF)
+assert(disk.write(-1, "x") == errno.EBADF)
+
 assert(disk.open(string.rep("x", 31)) == errno.ENAMETOOLONG)
 
 fd = check(disk.open("track.txt"))

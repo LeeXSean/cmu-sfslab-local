@@ -598,6 +598,21 @@ static int trace_B02(void)
     CHECK(p == 0, "seek(-100) on empty file should clamp to 0, got %zd", p);
     sfs_close(fd);
 
+    CHECK(sfs_read(fd, buf, 1) == -EBADF,
+          "read on closed fd should return -EBADF");
+    CHECK(sfs_write(fd, "x", 1) == -EBADF,
+          "write on closed fd should return -EBADF");
+    CHECK(sfs_getpos(fd) == -EBADF,
+          "getpos on closed fd should return -EBADF");
+    CHECK(sfs_seek(fd, 0) == -EBADF,
+          "seek on closed fd should return -EBADF");
+    sfs_close(fd);
+
+    CHECK(sfs_read(-1, buf, 1) == -EBADF,
+          "read(-1) should return -EBADF");
+    CHECK(sfs_write(-1, "x", 1) == -EBADF,
+          "write(-1) should return -EBADF");
+
     /* name too long */
     char longname[SFS_FILE_NAME_SIZE_LIMIT + 8];
     memset(longname, 'x', sizeof longname - 1);
