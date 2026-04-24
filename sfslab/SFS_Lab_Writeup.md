@@ -233,6 +233,10 @@ The autograder is organized into the same categories as the original:
 | Performance | benchmark | 10 | Concurrent throughput (only runs if correctness = 12/12) |
 | Style | -- | 4 | Manual self-review (not auto-graded) |
 
+Each correctness trace also runs `sfs-fsck` after unmounting its disk image.
+This catches structural corruption such as orphaned blocks or inconsistent
+block links even when the immediate API result appeared to be correct.
+
 Sample output (before implementing anything):
 
 ```

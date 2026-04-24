@@ -129,6 +129,59 @@ static size_t disk_size(void)
     return (size_t)ps * 64;
 }
 
+static int run_fsck_quiet(const char *disk_name)
+{
+    fflush(stdout);
+    fflush(stderr);
+
+    pid_t pid = fork();
+    if (pid < 0)
+        return -1;
+
+    if (pid == 0)
+    {
+        int devnull = open("/dev/null", O_WRONLY);
+        if (devnull >= 0)
+        {
+            dup2(devnull, STDOUT_FILENO);
+            dup2(devnull, STDERR_FILENO);
+            close(devnull);
+        }
+        execl("./sfs-fsck", "sfs-fsck", disk_name, (char *)NULL);
+        _exit(errno == ENOENT ? 127 : 126);
+    }
+
+    int status = 0;
+    for (;;)
+    {
+        pid_t r = waitpid(pid, &status, 0);
+        if (r == pid)
+            break;
+        if (r < 0 && errno != EINTR)
+            return -1;
+    }
+
+    if (WIFEXITED(status))
+        return WEXITSTATUS(status);
+    if (WIFSIGNALED(status))
+        return 128 + WTERMSIG(status);
+    return -1;
+}
+
+static void check_disk_consistency(const char *disk_name)
+{
+    int rc = run_fsck_quiet(disk_name);
+    CHECK(rc == 0, "sfs-fsck failed on %s (exit %d)", disk_name, rc);
+}
+
+static void unmount_and_check(const char *disk_name)
+{
+    int r = sfs_unmount();
+    CHECK(r == 0, "sfs_unmount returned %d", r);
+    if (r == 0)
+        check_disk_consistency(disk_name);
+}
+
 /* ================================================================== */
 /*  Category A -- Feature Tests                                         */
 /* ================================================================== */
@@ -142,12 +195,16 @@ static int trace_A00(void)
 
     r = sfs_unmount();
     CHECK(r == 0, "sfs_unmount returned %d", r);
+    if (r == 0)
+        check_disk_consistency(DISK_NAME);
 
     r = sfs_mount(DISK_NAME);
     CHECK(r == 0, "sfs_mount returned %d", r);
 
     r = sfs_unmount();
     CHECK(r == 0, "sfs_unmount returned %d", r);
+    if (r == 0)
+        check_disk_consistency(DISK_NAME);
     return trace_ok;
 }
 
@@ -174,7 +231,7 @@ static int trace_A01(void)
     CHECK(memcmp(buf, msg, (size_t)nr) == 0, "data mismatch");
     sfs_close(fd);
 
-    sfs_unmount();
+    unmount_and_check(DISK_NAME);
     return trace_ok;
 }
 
@@ -198,7 +255,7 @@ static int trace_A02(void)
     CHECK(sfs_getpos(99) == -EBADF, "getpos(99) should return -EBADF");
 
     sfs_close(fd);
-    sfs_unmount();
+    unmount_and_check(DISK_NAME);
     return trace_ok;
 }
 
@@ -228,7 +285,7 @@ static int trace_A03(void)
     CHECK(sfs_seek(-1, 0) == -EBADF, "seek(-1,0) should return -EBADF");
 
     sfs_close(fd);
-    sfs_unmount();
+    unmount_and_check(DISK_NAME);
     return trace_ok;
 }
 
@@ -245,8 +302,12 @@ static int trace_A04(void)
     int r = sfs_rename("old.txt", "new.txt");
     CHECK(r == 0, "sfs_rename returned %d", r);
 
-    sfs_unmount();
-    sfs_mount(DISK_NAME);
+    r = sfs_unmount();
+    CHECK(r == 0, "sfs_unmount returned %d", r);
+    if (r == 0)
+        check_disk_consistency(DISK_NAME);
+    r = sfs_mount(DISK_NAME);
+    CHECK(r == 0, "sfs_mount returned %d", r);
 
     fd = sfs_open("new.txt");
     CHECK(fd >= 0, "open new.txt after rename returned %d", fd);
@@ -279,7 +340,7 @@ static int trace_A04(void)
           "b.txt should contain 'AAA', got '%.*s'", (int)nr, buf);
     sfs_close(fd);
 
-    sfs_unmount();
+    unmount_and_check(DISK_NAME);
     return trace_ok;
 }
 
@@ -316,7 +377,7 @@ static int trace_B00(void)
         count++;
     CHECK(count == 3, "expected 3 files, got %d", count);
 
-    sfs_unmount();
+    unmount_and_check(DISK_NAME);
     return trace_ok;
 }
 
@@ -406,7 +467,7 @@ static int trace_B01(void)
     r = sfs_remove("renamed.txt");
     CHECK(r == 0, "remove renamed.txt returned %d", r);
 
-    sfs_unmount();
+    unmount_and_check(DISK_NAME);
     return trace_ok;
 }
 
@@ -491,7 +552,7 @@ static int trace_B02(void)
           "read after seek to 0: data mismatch");
     sfs_close(fd);
 
-    sfs_unmount();
+    unmount_and_check(DISK_NAME);
     return trace_ok;
 }
 
@@ -556,7 +617,7 @@ static int trace_B03(void)
     CHECK(sfs_list(&cookie, name, 0) == -EINVAL,
           "list with zero filename_space should return -EINVAL");
 
-    sfs_unmount();
+    unmount_and_check(DISK_NAME);
     return trace_ok;
 }
 
@@ -626,7 +687,7 @@ static int trace_C00(void)
     CHECK(count == NUM_THREADS, "expected %d files, got %d", NUM_THREADS,
           count);
 
-    sfs_unmount();
+    unmount_and_check(CONC_DISK);
     unlink(CONC_DISK);
     return trace_ok;
 }
@@ -670,7 +731,7 @@ static int trace_C01(void)
     }
     CHECK(ok, "concurrent reads of same file failed");
 
-    sfs_unmount();
+    unmount_and_check(CONC_DISK);
     unlink(CONC_DISK);
     return trace_ok;
 }
@@ -746,7 +807,7 @@ static int trace_C02(void)
             ok = 0;
     }
     CHECK(ok, "concurrent r/w mix failed");
-    sfs_unmount();
+    unmount_and_check(CONC_DISK);
     unlink(CONC_DISK);
 
     /* Part 2: open/close storm on same file */
@@ -768,7 +829,7 @@ static int trace_C02(void)
         count++;
     CHECK(count == 1, "storm: expected 1 file, got %d", count);
 
-    sfs_unmount();
+    unmount_and_check(CONC_DISK);
     unlink(CONC_DISK);
     return trace_ok;
 }

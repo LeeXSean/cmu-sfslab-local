@@ -52,28 +52,28 @@ baseline: test-sfs-baseline
 	@echo "Baseline (median): $$(head -1 .perf_baseline) ops/sec  ->  .perf_baseline"
 .PHONY: baseline
 
-test: test-sfs
+test: test-sfs sfs-fsck
 	./test-sfs
 .PHONY: test
 
-json: test-sfs
+json: test-sfs sfs-fsck
 	./test-sfs --json
 .PHONY: json
 
-report-json: test-sfs
+report-json: test-sfs sfs-fsck
 	@sh local/report-json.sh
 .PHONY: report-json
 
-grade: test-sfs test-sfs-baseline
+grade: test-sfs test-sfs-baseline sfs-fsck
 	$(MAKE) baseline
 	./test-sfs
 .PHONY: grade
 
-smoke: test-sfs
+smoke: test-sfs sfs-fsck
 	./test-sfs -q --smoke-only
 .PHONY: smoke
 
-stress: test-sfs
+stress: test-sfs sfs-fsck
 	@i=1; while [ $$i -le $(STRESS_RUNS) ]; do \
 	  printf "stress run %d/%d\n" $$i $(STRESS_RUNS); \
 	  ./test-sfs -q --concurrency-only || exit $$?; \
