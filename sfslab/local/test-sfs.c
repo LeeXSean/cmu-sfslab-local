@@ -495,6 +495,71 @@ static int trace_B02(void)
     return trace_ok;
 }
 
+/* B03: rename/list edge cases */
+static int trace_B03(void)
+{
+    trace_ok = 1;
+    sfs_format(DISK_NAME, disk_size());
+
+    int fd = sfs_open("src");
+    CHECK(fd >= 0, "open src returned %d", fd);
+    CHECK(sfs_write(fd, "SRC", 3) == 3, "write src failed");
+    sfs_close(fd);
+
+    fd = sfs_open("dst");
+    CHECK(fd >= 0, "open dst returned %d", fd);
+    CHECK(sfs_write(fd, "DST", 3) == 3, "write dst failed");
+    sfs_close(fd);
+
+    fd = sfs_open("keep");
+    CHECK(fd >= 0, "open keep returned %d", fd);
+    sfs_close(fd);
+
+    int r = sfs_rename("src", "dst");
+    CHECK(r == 0, "rename src->dst returned %d", r);
+
+    sfs_list_cookie cookie = NULL;
+    char name[SFS_FILE_NAME_SIZE_LIMIT];
+    int count = 0;
+    int saw_src = 0;
+    int saw_dst = 0;
+    int saw_keep = 0;
+    while (sfs_list(&cookie, name, sizeof name) == 0)
+    {
+        count++;
+        if (strcmp(name, "src") == 0) saw_src = 1;
+        if (strcmp(name, "dst") == 0) saw_dst = 1;
+        if (strcmp(name, "keep") == 0) saw_keep = 1;
+    }
+    CHECK(count == 2, "expected 2 files after overwrite rename, got %d",
+          count);
+    CHECK(!saw_src, "src should not remain after rename");
+    CHECK(saw_dst && saw_keep, "dst and keep should be listed");
+
+    fd = sfs_open("dst");
+    CHECK(fd >= 0, "open dst after rename returned %d", fd);
+    char buf[8] = {0};
+    ssize_t nr = sfs_read(fd, buf, 3);
+    CHECK(nr == 3 && memcmp(buf, "SRC", 3) == 0,
+          "dst should contain renamed src data");
+    sfs_close(fd);
+
+    char longname[SFS_FILE_NAME_SIZE_LIMIT + 8];
+    memset(longname, 'x', sizeof longname - 1);
+    longname[sizeof longname - 1] = '\0';
+    CHECK(sfs_remove(longname) == -ENAMETOOLONG,
+          "remove(longname) should return -ENAMETOOLONG");
+    CHECK(sfs_rename("dst", longname) == -ENAMETOOLONG,
+          "rename to longname should return -ENAMETOOLONG");
+
+    cookie = NULL;
+    CHECK(sfs_list(&cookie, name, 0) == -EINVAL,
+          "list with zero filename_space should return -EINVAL");
+
+    sfs_unmount();
+    return trace_ok;
+}
+
 /* ================================================================== */
 /*  Category C — Concurrent Correctness                                */
 /* ================================================================== */
@@ -1312,6 +1377,7 @@ int main(int argc, char *argv[])
         {"B00", "remove_list", trace_B00},
         {"B01", "multi_block_seek", trace_B01},
         {"B02", "edge_cases", trace_B02},
+        {"B03", "rename_list_edges", trace_B03},
     };
 
     struct trace_entry cat_c[] = {
@@ -1321,7 +1387,7 @@ int main(int argc, char *argv[])
     };
 
     int a = run_category("A (Feature Tests)", cat_a, 5);
-    int b = run_category("B (Sequential Correctness)", cat_b, 3);
+    int b = run_category("B (Sequential Correctness)", cat_b, 4);
     int c = run_category("C (Concurrent Correctness)", cat_c, 3);
 
     /* TSan race detection: if races found, C score becomes 0 */
@@ -1332,11 +1398,11 @@ int main(int argc, char *argv[])
         c = 0;
 
     int correctness = a + b + c;
-    printf("\nCorrectness: %d/11\n", correctness);
+    printf("\nCorrectness: %d/12\n", correctness);
 
     printf("\nPerformance:\n");
     int perf = 0;
-    if (correctness < 11)
+    if (correctness < 12)
     {
         printf("  (skipped — correctness tests must all pass first)\n");
         printf("  Score: 0/10\n");
@@ -1407,9 +1473,9 @@ int main(int argc, char *argv[])
 
     int total = correctness + perf;
     printf("\n----------------------------------------\n");
-    printf("  Total: %d/21  (+ up to 4 style pts)\n", total);
+    printf("  Total: %d/22  (+ up to 4 style pts)\n", total);
     printf("========================================\n");
 
     unlink(DISK_NAME);
-    return (correctness == 11) ? 0 : 1;
+    return (correctness == 12) ? 0 : 1;
 }

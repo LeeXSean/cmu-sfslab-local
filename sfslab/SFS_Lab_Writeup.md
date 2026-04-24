@@ -228,9 +228,9 @@ The autograder is organized into the same categories as the original:
 | Category | Traces | Points | What it tests |
 |----------|--------|--------|---------------|
 | A (Feature Tests) | A00–A04 | 5 | format/mount, open/close/rw, getpos, seek, rename |
-| B (Sequential Correctness) | B00–B02 | 3 | remove/list, multi-block seek + cross-boundary read, edge cases + getpos tracking |
+| B (Sequential Correctness) | B00–B03 | 4 | remove/list, multi-block seek + cross-boundary read, edge cases + rename/list checks |
 | C (Concurrent Correctness) | C00–C02 | 3 | separate-file writes, shared reads, r/w mix + storm |
-| Performance | benchmark | 10 | Concurrent throughput (only runs if correctness = 11/11) |
+| Performance | benchmark | 10 | Concurrent throughput (only runs if correctness = 12/12) |
 | Style | — | 4 | Manual self-review (not auto-graded) |
 
 Sample output (before implementing anything):
@@ -256,7 +256,8 @@ Category B (Sequential Correctness):
   B00 remove_list             PASS  [1/1]
   B01 multi_block_seek        FAIL  [0/1]
   B02 edge_cases              FAIL  [0/1]
-  Subtotal: 1/3
+  B03 rename_list_edges       FAIL  [0/1]
+  Subtotal: 1/4
 
 Category C (Concurrent Correctness):
   C00 separate_files          PASS  [1/1]
@@ -267,14 +268,14 @@ Category C (Concurrent Correctness):
 Race Detection (ThreadSanitizer):
   DATA RACE DETECTED — Category C score set to 0
 
-Correctness: 3/11
+Correctness: 3/12
 
 Performance:
   (skipped — correctness tests must all pass first)
   Score: 0/10
 
 ----------------------------------------
-  Total: 3/21  (+ up to 4 style pts)
+  Total: 3/22  (+ up to 4 style pts)
 ========================================
 ```
 
