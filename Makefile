@@ -23,10 +23,15 @@ smoke:
 trace-check:
 	$(MAKE) -C $(HANDOUT) trace-check
 
+.PHONY: handout-check
+handout-check:
+	$(MAKE) -C $(HANDOUT) handout-check
+
 .PHONY: clean
 clean:
 	$(MAKE) -C $(HANDOUT) clean
 
 .PHONY: dist
 dist:
+	$(MAKE) -C $(HANDOUT) handout-check
 	tar -cf $(DIST) $(HANDOUT)

@@ -20,3 +20,6 @@ jobs:
 
       - name: Check trace syntax
         run: make trace-check
+
+      - name: Check handout package
+        run: make handout-check

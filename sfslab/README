@@ -60,6 +60,9 @@ Useful make targets:
     make trace-check
         Syntax-check Lua-style traces when `luac` is installed.
 
+    make handout-check
+        Check that the handout has required files and no generated artifacts.
+
 Read SFS_Lab_Writeup.md for the lab narrative and
 local/OFFLINE_SELF_STUDY.md for the differences between this offline package
 and the course infrastructure. Read local/SCORING.md before treating a local

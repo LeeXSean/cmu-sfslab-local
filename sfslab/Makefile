@@ -68,6 +68,10 @@ trace-check:
 	@sh local/check-traces.sh
 .PHONY: trace-check
 
+handout-check:
+	@sh local/handout-check.sh
+.PHONY: handout-check
+
 clean:
 	-rm -f $(PROGRAMS) test-sfs-tsan *.o local/*.o *.img tsan_output.log .perf_baseline .perf_baseline.tmp
 .PHONY: clean
