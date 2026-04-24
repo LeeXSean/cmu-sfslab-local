@@ -599,6 +599,18 @@ static int trace_B02(void)
     sfs_close(fd);
     sfs_close(fd2);
 
+    /* open-file lifecycle: remove and unmount must respect live fds */
+    fd = sfs_open("busy.txt");
+    CHECK(fd >= 0, "open busy.txt returned %d", fd);
+    CHECK(sfs_write(fd, "busy", 4) == 4, "write busy.txt failed");
+    r = sfs_remove("busy.txt");
+    CHECK(r == -EBUSY, "remove(open file) should be -EBUSY, got %d", r);
+    r = sfs_unmount();
+    CHECK(r == -EBUSY, "unmount with open file should be -EBUSY, got %d", r);
+    sfs_close(fd);
+    r = sfs_remove("busy.txt");
+    CHECK(r == 0, "remove busy.txt after close returned %d", r);
+
     /* write exactly BLOCK_DATA_SIZE bytes (boundary condition) */
     fd = sfs_open("boundary.txt");
     char fill[500];

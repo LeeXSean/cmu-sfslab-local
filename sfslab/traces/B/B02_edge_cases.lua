@@ -29,6 +29,13 @@ assert(check(disk.getPos(fd2)) == 5)
 disk.close(fd1)
 disk.close(fd2)
 
+fd = check(disk.open("busy.txt"))
+assert(check(disk.write(fd, "busy")) == 4)
+assert(disk.remove("busy.txt") == errno.EBUSY)
+assert(disk.unmount() == errno.EBUSY)
+disk.close(fd)
+assert(check(disk.remove("busy.txt")) == 0)
+
 fd = check(disk.open("boundary.txt"))
 assert(check(disk.write(fd, string.rep("Z", 500))) == 500)
 assert(check(disk.getPos(fd)) == 500)
