@@ -64,6 +64,9 @@ smoke: test-sfs
 	./test-sfs -q --smoke-only
 .PHONY: smoke
 
+check: handout-check starter-check trace-check smoke
+.PHONY: check
+
 trace-check:
 	@sh local/check-traces.sh
 .PHONY: trace-check

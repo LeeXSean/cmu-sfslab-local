@@ -20,6 +20,10 @@ grade:
 smoke:
 	$(MAKE) -C $(HANDOUT) smoke
 
+.PHONY: check
+check:
+	$(MAKE) -C $(HANDOUT) check
+
 .PHONY: trace-check
 trace-check:
 	$(MAKE) -C $(HANDOUT) trace-check
@@ -38,6 +42,7 @@ clean:
 
 .PHONY: dist
 dist:
+	$(MAKE) -C $(HANDOUT) clean
 	$(MAKE) -C $(HANDOUT) handout-check
 	$(MAKE) -C $(HANDOUT) starter-check
 	@if tar --version 2>/dev/null | grep -qi 'gnu tar'; then \

@@ -15,14 +15,5 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y lua5.4
 
-      - name: Build and smoke test
-        run: make smoke
-
-      - name: Check trace syntax
-        run: make trace-check
-
-      - name: Check handout package
-        run: make handout-check
-
-      - name: Check starter stubs
-        run: make starter-check
+      - name: Check handout
+        run: make check

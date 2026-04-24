@@ -54,6 +54,7 @@ The repository root also forwards common targets:
 
 ```bash
 make smoke
+make check
 make trace-check
 make handout-check
 make starter-check

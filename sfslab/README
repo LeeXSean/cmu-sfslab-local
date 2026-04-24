@@ -57,6 +57,9 @@ Useful make targets:
     make smoke
         Build and run the two starter traces that should pass on the skeleton.
 
+    make check
+        Run smoke, trace-check, handout-check, and starter-check.
+
     make trace-check
         Syntax-check Lua-style traces when `luac` is installed.
 
