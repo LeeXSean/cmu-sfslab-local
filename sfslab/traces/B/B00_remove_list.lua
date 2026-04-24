@@ -12,10 +12,21 @@ for _, name in ipairs({ "file1", "file2", "file3" }) do
     disk.close(fd)
 end
 
+assert(check(disk.remove("file2")) == 0)
+fd = check(disk.open("file4"))
+disk.close(fd)
+
 local count = 0
-for _ in disk.list() do
+local seen = {}
+for name in disk.list() do
     count = count + 1
+    seen[name] = true
 end
 assert(count == 3)
+assert(not seen["del.txt"])
+assert(not seen["file2"])
+assert(seen["file1"])
+assert(seen["file3"])
+assert(seen["file4"])
 
 assert(check(disk.unmount()) == 0)

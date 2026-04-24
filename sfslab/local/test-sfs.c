@@ -446,16 +446,40 @@ static int trace_B00(void)
     int fd1 = sfs_open("file1");
     int fd2 = sfs_open("file2");
     int fd3 = sfs_open("file3");
+    CHECK(fd1 >= 0 && fd2 >= 0 && fd3 >= 0,
+          "opening file1/file2/file3 returned %d/%d/%d", fd1, fd2, fd3);
     sfs_close(fd1);
     sfs_close(fd2);
     sfs_close(fd3);
 
+    r = sfs_remove("file2");
+    CHECK(r == 0, "remove file2 returned %d", r);
+    int fd4 = sfs_open("file4");
+    CHECK(fd4 >= 0, "open file4 after removing file2 returned %d", fd4);
+    sfs_close(fd4);
+
     sfs_list_cookie cookie = NULL;
     char name[SFS_FILE_NAME_SIZE_LIMIT];
     int count = 0;
+    int saw_del = 0;
+    int saw_file1 = 0;
+    int saw_file2 = 0;
+    int saw_file3 = 0;
+    int saw_file4 = 0;
     while (sfs_list(&cookie, name, sizeof name) == 0)
+    {
         count++;
+        if (strcmp(name, "del.txt") == 0) saw_del = 1;
+        if (strcmp(name, "file1") == 0) saw_file1 = 1;
+        if (strcmp(name, "file2") == 0) saw_file2 = 1;
+        if (strcmp(name, "file3") == 0) saw_file3 = 1;
+        if (strcmp(name, "file4") == 0) saw_file4 = 1;
+    }
     CHECK(count == 3, "expected 3 files, got %d", count);
+    CHECK(!saw_del && !saw_file2,
+          "removed names should not appear in list");
+    CHECK(saw_file1 && saw_file3 && saw_file4,
+          "file1/file3/file4 should all appear after directory-slot reuse");
 
     unmount_and_check(DISK_NAME);
     return trace_ok;
