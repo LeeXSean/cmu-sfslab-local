@@ -19,6 +19,10 @@ test:
 json:
 	@$(MAKE) -s -C $(HANDOUT) json
 
+.PHONY: report-json
+report-json:
+	@$(MAKE) -s -C $(HANDOUT) report-json
+
 .PHONY: grade
 grade:
 	$(MAKE) -C $(HANDOUT) grade
@@ -95,17 +99,22 @@ docker-shell: docker-image
 
 .PHONY: docker-check
 docker-check: docker-image
-	$(DOCKER_RUN) make check
+	$(DOCKER_RUN) sh -c 'make clean && make check'
 
 .PHONY: docker-trace-smoke
 docker-trace-smoke: docker-image
-	$(DOCKER_RUN) make trace-smoke
+	$(DOCKER_RUN) sh -c 'make clean && make trace-smoke'
 
 .PHONY: docker-trace-run
 docker-trace-run: docker-image
-	$(DOCKER_RUN) make trace-run
+	$(DOCKER_RUN) sh -c 'make clean && make trace-run'
 
 .PHONY: docker-trace-json
 docker-trace-json:
 	@docker build -q -t $(DOCKER_IMAGE) . >/dev/null
-	@$(DOCKER_RUN) sh -c 'cd $(HANDOUT) && make -s lua-runner >/dev/null && sh local/run-lua-traces.sh --json'
+	@$(DOCKER_RUN) sh -c 'make -s clean >/dev/null && cd $(HANDOUT) && make -s lua-runner >/dev/null && sh local/run-lua-traces.sh --json'
+
+.PHONY: docker-report-json
+docker-report-json:
+	@docker build -q -t $(DOCKER_IMAGE) . >/dev/null
+	@$(DOCKER_RUN) sh -c 'make -s clean >/dev/null && cd $(HANDOUT) && make -s report-json'

@@ -59,6 +59,10 @@ json: test-sfs
 	./test-sfs --json
 .PHONY: json
 
+report-json: test-sfs
+	@sh local/report-json.sh
+.PHONY: report-json
+
 grade: test-sfs test-sfs-baseline
 	$(MAKE) baseline
 	./test-sfs

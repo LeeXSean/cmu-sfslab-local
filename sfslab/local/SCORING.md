@@ -17,6 +17,7 @@ Run `make json` to print a machine-readable score summary.
 Run `make trace-json` to print machine-readable Lua trace coverage. Lua trace
 coverage is useful for comparing against the official trace style, but it is
 reported separately and is not added to the 22-point local score.
+Run `make report-json` to print both reports in one JSON document.
 
 ## How To Read The Score
 

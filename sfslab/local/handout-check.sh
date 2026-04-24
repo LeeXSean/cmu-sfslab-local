@@ -15,6 +15,7 @@ for path in \
     local/sfs-baseline-ref.c \
     local/build-lua-runner.sh \
     local/lua-sfs-runner.c \
+    local/report-json.sh \
     local/run-lua-traces.sh \
     local/OFFLINE_SELF_STUDY.md \
     local/SCORING.md \

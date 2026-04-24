@@ -57,11 +57,13 @@ The repository root also forwards common targets:
 make smoke
 make check
 make json
+make report-json
 make trace-check
 make trace-smoke
 make trace-run
 make trace-json
 make docker-check
+make docker-report-json
 make docker-trace-smoke
 make docker-trace-run
 make docker-trace-json
@@ -80,6 +82,10 @@ reproducible GNU tar flags when they are available.
 
 `make json` exits nonzero when correctness fails, just like `make test`; the
 JSON is still written to stdout.
+
+`make report-json` combines the local autograder JSON with the separate
+official-style Lua trace coverage. The local autograder remains the graded
+22-point score; trace coverage is diagnostic.
 
 `make trace-smoke` builds the local Lua runner and executes the manifest's
 starter-safe Lua traces. `make trace-run` executes the full Lua-style trace catalog and is
@@ -109,6 +115,7 @@ The root Makefile wraps the same container flow:
 
 ```bash
 make docker-check
+make docker-report-json
 make docker-trace-smoke
 make docker-trace-run
 make docker-trace-json
