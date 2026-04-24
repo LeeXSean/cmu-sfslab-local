@@ -33,7 +33,7 @@
 
 /* Disk image paths. Default to the current directory; override with
    SFS_DISK_DIR=/some/path (e.g. SFS_DISK_DIR=/tmp on Docker Desktop
-   to keep perf I/O off the bind mount — see writeup §5.4). */
+   to keep perf I/O off the bind mount -- see writeup Section 5.4). */
 static const char *DISK_NAME = "test.img";
 static const char *CONC_DISK = "test_conc.img";
 static const char *PERF_DISK = "test_perf.img";
@@ -130,7 +130,7 @@ static size_t disk_size(void)
 }
 
 /* ================================================================== */
-/*  Category A — Feature Tests                                         */
+/*  Category A -- Feature Tests                                         */
 /* ================================================================== */
 
 /* A00: format, mount, unmount */
@@ -284,7 +284,7 @@ static int trace_A04(void)
 }
 
 /* ================================================================== */
-/*  Category B — Sequential Correctness                                */
+/*  Category B -- Sequential Correctness                                */
 /* ================================================================== */
 
 /* B00: remove + list */
@@ -469,7 +469,7 @@ static int trace_B02(void)
     pos = sfs_getpos(fd2);
     CHECK(pos == 5, "fd2 getpos should be 5, got %zd", pos);
 
-    /* fd1 is at pos 12 (after write), fd2 is at pos 5 — independent */
+    /* fd1 is at pos 12 (after write), fd2 is at pos 5 -- independent */
     pos = sfs_getpos(fd);
     CHECK(pos == 12, "fd1 getpos should still be 12, got %zd", pos);
 
@@ -561,7 +561,7 @@ static int trace_B03(void)
 }
 
 /* ================================================================== */
-/*  Category C — Concurrent Correctness                                */
+/*  Category C -- Concurrent Correctness                                */
 /* ================================================================== */
 
 #define NUM_THREADS 4
@@ -1048,7 +1048,7 @@ static int run_tsan_check(void)
     int rc = system(compile_cmd);
     if (rc != 0)
     {
-        printf("  (skipped — TSan compilation failed, gcc may not support "
+        printf("  (skipped -- TSan compilation failed, gcc may not support "
                "-fsanitize=thread)\n");
         return 1; // don't penalize if TSan unavailable
     }
@@ -1085,7 +1085,7 @@ static int run_tsan_check(void)
 
     if (race_found)
     {
-        printf("  DATA RACE DETECTED — Category C score set to 0\n");
+        printf("  DATA RACE DETECTED -- Category C score set to 0\n");
         printf("  Race stacks were suppressed; SFS_Lab_Writeup.md shows how to rerun TSan to print them.\n");
         return 0;
     }
@@ -1095,7 +1095,7 @@ static int run_tsan_check(void)
 }
 
 /* ================================================================== */
-/*  Main — run all traces and print scoreboard                         */
+/*  Main -- run all traces and print scoreboard                         */
 /* ================================================================== */
 
 typedef int (*trace_fn)(void);
@@ -1404,12 +1404,12 @@ int main(int argc, char *argv[])
     int perf = 0;
     if (correctness < 12)
     {
-        printf("  (skipped — correctness tests must all pass first)\n");
+        printf("  (skipped -- correctness tests must all pass first)\n");
         printf("  Score: 0/10\n");
     }
     else
     {
-        /* Perf benchmark also needs deadlock protection — 60s budget
+        /* Perf benchmark also needs deadlock protection -- 60s budget
            (longer than a Category C trace because slower machines may
            legitimately take more time on the full workload). */
         fflush(stdout); fflush(stderr);

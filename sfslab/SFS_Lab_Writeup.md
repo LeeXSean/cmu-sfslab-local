@@ -42,9 +42,9 @@ separate users.
 | File | Description |
 |------|-------------|
 | `sfs-disk.c` | **The file you will be modifying.** Contains the SFS implementation. |
-| `sfs-api.h` | API specification header. Read this carefully — do not modify. |
+| `sfs-api.h` | API specification header. Read this carefully -- do not modify. |
 | `sfs-disk.h` | On-disk data structures and constants. Read-only (unless tackling optional challenges). |
-| `sfs-support.c` | Low-level disk/mmap support routines. Provided — do not modify. |
+| `sfs-support.c` | Low-level disk/mmap support routines. Provided -- do not modify. |
 | `local/sfs-baseline-ref.c` | Naive reference implementation (handout code + one global mutex). Used by `make baseline` to calibrate the perf score for your machine. Do not modify. |
 | `sfs-fsck.c` | Filesystem consistency checker. Run it on disk images to find structural bugs. |
 | `local/test-sfs.c` | Standalone test driver and autograder. Exercises all API functions, includes TSan race detection. |
@@ -60,9 +60,9 @@ make
 
 This produces three executables:
 
-- `sfs-fsck` — filesystem consistency checker
-- `test-sfs` — test driver for your implementation
-- `test-sfs-baseline` — reference implementation (handout code + one global mutex) used to calibrate the perf score for your machine; see §5.1.
+- `sfs-fsck` -- filesystem consistency checker
+- `test-sfs` -- test driver for your implementation
+- `test-sfs-baseline` -- reference implementation (handout code + one global mutex) used to calibrate the perf score for your machine; see Section 5.1.
 
 Before running the autograder for the first time on a new machine, calibrate
 the performance baseline:
@@ -74,7 +74,7 @@ make baseline
 This runs `test-sfs-baseline` five times and caches the **median** throughput
 to `.perf_baseline`, so transient noise (thermal throttling, background load,
 scheduler jitter) doesn't skew your perf ratio. A `spread: min/max` line is
-printed so you can tell at a glance whether the run was stable — if min and
+printed so you can tell at a glance whether the run was stable -- if min and
 max differ by more than ~10%, the machine was probably not quiet; re-run on
 an idle system. Override the sample count with `make baseline BASELINE_RUNS=N`
 (odd N recommended).
@@ -84,7 +84,7 @@ baseline, so results are comparable across laptops.
 
 ### 2.3 Running Tests
 
-Assuming you have already run `make` and `make baseline` (§2.2):
+Assuming you have already run `make` and `make baseline` (Section 2.2):
 
 ```bash
 ./test-sfs
@@ -94,7 +94,7 @@ The test driver will exercise all SFS API functions and report pass/fail for eac
 Before you implement anything, you should see failures for `sfs_getpos`, `sfs_seek`, and
 `sfs_rename`. As you implement each function, the corresponding tests will start passing.
 
-See §5.1 for output-verbosity knobs (`-v` for full FAIL detail, `-q` for
+See Section 5.1 for output-verbosity knobs (`-v` for full FAIL detail, `-q` for
 scoreboard only).
 
 You can also check a disk image for structural consistency:
@@ -219,7 +219,7 @@ grading structure. It runs categorized test traces and prints a scoreboard:
 
 ```bash
 make              # builds sfs-fsck, test-sfs, test-sfs-baseline
-make baseline     # one-time per-machine perf calibration (see §2.2)
+make baseline     # one-time per-machine perf calibration (see Section 2.2)
 ./test-sfs
 ```
 
@@ -227,11 +227,11 @@ The autograder is organized into the same categories as the original:
 
 | Category | Traces | Points | What it tests |
 |----------|--------|--------|---------------|
-| A (Feature Tests) | A00–A04 | 5 | format/mount, open/close/rw, getpos, seek, rename |
-| B (Sequential Correctness) | B00–B03 | 4 | remove/list, multi-block seek + cross-boundary read, edge cases + rename/list checks |
-| C (Concurrent Correctness) | C00–C02 | 3 | separate-file writes, shared reads, r/w mix + storm |
+| A (Feature Tests) | A00-A04 | 5 | format/mount, open/close/rw, getpos, seek, rename |
+| B (Sequential Correctness) | B00-B03 | 4 | remove/list, multi-block seek + cross-boundary read, edge cases + rename/list checks |
+| C (Concurrent Correctness) | C00-C02 | 3 | separate-file writes, shared reads, r/w mix + storm |
 | Performance | benchmark | 10 | Concurrent throughput (only runs if correctness = 12/12) |
-| Style | — | 4 | Manual self-review (not auto-graded) |
+| Style | -- | 4 | Manual self-review (not auto-graded) |
 
 Sample output (before implementing anything):
 
@@ -266,12 +266,12 @@ Category C (Concurrent Correctness):
   Subtotal: 3/3
 
 Race Detection (ThreadSanitizer):
-  DATA RACE DETECTED — Category C score set to 0
+  DATA RACE DETECTED -- Category C score set to 0
 
 Correctness: 3/12
 
 Performance:
-  (skipped — correctness tests must all pass first)
+  (skipped -- correctness tests must all pass first)
   Score: 0/10
 
 ----------------------------------------
@@ -280,13 +280,13 @@ Performance:
 ```
 
 **Output verbosity:** FAIL diagnostics print grouped under the trace
-they belong to — the PASS/FAIL summary line always comes first, then any
+they belong to -- the PASS/FAIL summary line always comes first, then any
 FAIL detail for that trace, then the next trace. To keep a broken
 implementation from flooding the screen, only the first 3 FAIL lines per
 trace are shown; the rest are collapsed into `(... N more fails
 suppressed)`.
 
-- `./test-sfs -q` (`--quiet`) suppresses all FAIL detail — useful when
+- `./test-sfs -q` (`--quiet`) suppresses all FAIL detail -- useful when
   you only want the scoreboard.
 - `./test-sfs -v` (`--verbose`) raises the cap to unlimited.
 
@@ -296,16 +296,16 @@ effect there.)
 
 **Note on Category C:** After running the C traces, the autograder automatically compiles
 a ThreadSanitizer build and re-runs the concurrent tests. If TSan detects any data races,
-the Category C score is set to 0 — even if the traces appeared to pass. This mirrors the
+the Category C score is set to 0 -- even if the traces appeared to pass. This mirrors the
 original CMU ConTech-based race detection. If your system does not support
 `-fsanitize=thread`, the TSan check is skipped without penalty.
 
 The performance benchmark uses 8 threads each doing 100 open/write/seek/read/close
 cycles. The benchmark is **sampled 5 times and the median ops/sec is scored**,
-mirroring what `make baseline` does for calibration — this keeps the numerator
+mirroring what `make baseline` does for calibration -- this keeps the numerator
 and denominator of your ratio on the same statistical footing. A `spread`
-percentage is printed (200 × (max − min) / (max + min)); the autograder also
-prints a warning if spread exceeds 20%, pointing at §5.4 for mitigations.
+percentage is printed (200 x (max - min) / (max + min)); the autograder also
+prints a warning if spread exceeds 20%, pointing at Section 5.4 for mitigations.
 
 Raw ops/sec is machine-dependent, so the score is instead a ratio against
 a shipped reference implementation (the handout code wrapped with a single global
@@ -314,11 +314,11 @@ mutex) measured on the same machine via `make baseline`. Let
 
 | ratio | Score | Interpretation |
 |-------|-------|----------------|
-| ≥ 0.90 | 10/10 | At or near fine-grained locking |
-| ≥ 0.70 | 9/10  | Clearly better than coarse lock |
-| ≥ 0.50 | 7/10  | Moderate improvement |
-| ≥ 0.30 | 5/10  | Small improvement |
-| ≥ 0.15 | 3/10  | Roughly coarse-lock territory |
+| >= 0.90 | 10/10 | At or near fine-grained locking |
+| >= 0.70 | 9/10  | Clearly better than coarse lock |
+| >= 0.50 | 7/10  | Moderate improvement |
+| >= 0.30 | 5/10  | Small improvement |
+| >= 0.15 | 3/10  | Roughly coarse-lock territory |
 | < 0.15 | 0/10  | Slower than the naive baseline |
 
 If `.perf_baseline` is missing, the grader falls back to the legacy absolute
@@ -376,7 +376,7 @@ of issue come up often enough to be worth calling out.
 through a 9p / virtiofs / gRPC-FUSE layer; every `open`/`write`/`unlink` in the
 SFS disk image crosses that layer. Combined with Windows Defender scanning
 the mounted directory and the Hyper-V scheduler preempting the Linux VM,
-single-run variance of 40–70% on the perf benchmark is normal rather than a
+single-run variance of 40-70% on the perf benchmark is normal rather than a
 bug in your implementation. The 5-sample median absorbs most of this. If you
 still see the "spread exceeds 20%" warning, pick one (easiest first):
 
@@ -391,16 +391,16 @@ still see the "spread exceeds 20%" warning, pick one (easiest first):
    ```
    The autograder prints `Disk images redirected via SFS_DISK_DIR: /tmp` to
    stderr when the variable is set, so you can confirm it took effect. On
-   a typical Docker-on-Windows setup this alone drops spread from 40–70%
+   a typical Docker-on-Windows setup this alone drops spread from 40-70%
    into the single digits. The value is recorded into `.perf_baseline`; if
    your calibration and scored run disagree on `SFS_DISK_DIR`, the scorer
-   prints a loud warning and tells you to recalibrate — otherwise the ratio
+   prints a loud warning and tells you to recalibrate -- otherwise the ratio
    would be measuring two different filesystems.
 2. **Raise the sample count.** `make baseline BASELINE_RUNS=11` tightens
    calibration at the cost of a longer one-time setup. For the scored run,
    bump `PERF_SAMPLE_RUNS` in `local/test-sfs.c` and rebuild.
-3. **Exclude the project directory from Windows Defender** (Settings →
-   Virus & threat protection → Exclusions). Removes one randomized source of
+3. **Exclude the project directory from Windows Defender** (Settings ->
+   Virus & threat protection -> Exclusions). Removes one randomized source of
    latency spikes.
 4. **Move the whole project to WSL2's native filesystem** (e.g.
    `\\wsl$\Ubuntu\home\...`). The bind mount disappears entirely and spread
@@ -411,7 +411,7 @@ still see the "spread exceeds 20%" warning, pick one (easiest first):
 while the container is running, you may see contradictory state across
 syscalls: `ls` reports the directory missing, but `mv` or `rm -rf` claims it
 still exists, and `stat` may give a different answer again. This is the
-mount driver's metadata cache disagreeing with itself — not a bug you wrote.
+mount driver's metadata cache disagreeing with itself -- not a bug you wrote.
 Fixes, easiest first:
 
 1. Extract under a fresh name: `tar xf sfslab-handout.tar && mv sfslab work-dir`.
@@ -469,7 +469,7 @@ different from the Unix `lseek` system call.
 
 ### Does `sfs_rename` need to be atomic?
 
-Yes. If `new_name` already exists, the replacement should be atomic — there should be no gap
+Yes. If `new_name` already exists, the replacement should be atomic -- there should be no gap
 in which a concurrent thread can observe `new_name` not existing. For the single-threaded
 implementation this is straightforward; for the concurrent version, you will need appropriate
 locking.
