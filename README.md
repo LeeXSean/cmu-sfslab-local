@@ -60,9 +60,11 @@ make json
 make trace-check
 make trace-smoke
 make trace-run
+make trace-json
 make docker-check
 make docker-trace-smoke
 make docker-trace-run
+make docker-trace-json
 make trace-list
 make manifest-check
 make handout-check
@@ -82,7 +84,9 @@ JSON is still written to stdout.
 `make trace-smoke` builds the local Lua runner and executes the starter-safe
 Lua traces. `make trace-run` executes the full Lua-style trace catalog and is
 expected to fail on the unmodified skeleton. Both need `pkg-config` and Lua
-development headers.
+development headers. `make trace-json` prints the same official-style trace
+coverage as JSON; it is diagnostic and does not change the local 22-point
+autograder score.
 
 On Debian or Ubuntu, install those trace-runner dependencies with:
 
@@ -107,6 +111,7 @@ The root Makefile wraps the same container flow:
 make docker-check
 make docker-trace-smoke
 make docker-trace-run
+make docker-trace-json
 ```
 
 ## What Is Local-Only

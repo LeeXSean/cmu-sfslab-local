@@ -13,6 +13,9 @@ for path in \
     sfs-support.c \
     local/test-sfs.c \
     local/sfs-baseline-ref.c \
+    local/build-lua-runner.sh \
+    local/lua-sfs-runner.c \
+    local/run-lua-traces.sh \
     local/OFFLINE_SELF_STUDY.md \
     local/SCORING.md \
     traces/README.md
@@ -29,13 +32,15 @@ fi
 
 if find . \( -name '*.o' -o -name '*.img' -o -name 'test-sfs' \
         -o -name 'test-sfs-baseline' -o -name 'sfs-fsck' \
-        -o -name 'test-sfs-tsan' -o -name '.perf_baseline' \
+        -o -name 'lua-sfs-runner' -o -name 'test-sfs-tsan' \
+        -o -name '.perf_baseline' \
         -o -name '.perf_baseline.tmp' -o -name 'tsan_output.log' \) \
         -print | grep . >/dev/null 2>&1; then
     echo "handout-check: generated files are present"
     find . \( -name '*.o' -o -name '*.img' -o -name 'test-sfs' \
         -o -name 'test-sfs-baseline' -o -name 'sfs-fsck' \
-        -o -name 'test-sfs-tsan' -o -name '.perf_baseline' \
+        -o -name 'lua-sfs-runner' -o -name 'test-sfs-tsan' \
+        -o -name '.perf_baseline' \
         -o -name '.perf_baseline.tmp' -o -name 'tsan_output.log' \) \
         -print
     exit 1

@@ -24,6 +24,8 @@ being runnable without CMU infrastructure.
   unmodified skeleton. The local binding includes a synchronous fallback for
   `lanes.gen`; the C autograder remains the source of real concurrent stress
   testing.
+- `make trace-json` reports the Lua trace catalog as separate diagnostic
+  coverage, not as part of the local 22-point score.
 - The repository root `Dockerfile` provides a Linux toolchain for builds,
   ThreadSanitizer runs, and Lua trace execution.
 - `local/SCORING.md` explains why the local score is a self-study signal, not

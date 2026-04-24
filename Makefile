@@ -17,7 +17,7 @@ test:
 
 .PHONY: json
 json:
-	$(MAKE) -C $(HANDOUT) json
+	@$(MAKE) -s -C $(HANDOUT) json
 
 .PHONY: grade
 grade:
@@ -37,7 +37,7 @@ trace-check:
 
 .PHONY: trace-list
 trace-list:
-	$(MAKE) -C $(HANDOUT) trace-list
+	@$(MAKE) -s -C $(HANDOUT) trace-list
 
 .PHONY: lua-runner
 lua-runner:
@@ -46,6 +46,10 @@ lua-runner:
 .PHONY: trace-run
 trace-run:
 	$(MAKE) -C $(HANDOUT) trace-run
+
+.PHONY: trace-json
+trace-json:
+	@$(MAKE) -s -C $(HANDOUT) trace-json
 
 .PHONY: trace-smoke
 trace-smoke:
@@ -100,3 +104,8 @@ docker-trace-smoke: docker-image
 .PHONY: docker-trace-run
 docker-trace-run: docker-image
 	$(DOCKER_RUN) make trace-run
+
+.PHONY: docker-trace-json
+docker-trace-json:
+	@docker build -q -t $(DOCKER_IMAGE) . >/dev/null
+	@$(DOCKER_RUN) sh -c 'cd $(HANDOUT) && make -s lua-runner >/dev/null && sh local/run-lua-traces.sh --json'

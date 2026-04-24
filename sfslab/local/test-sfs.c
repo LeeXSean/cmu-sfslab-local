@@ -3,7 +3,7 @@
  *
  * Mirrors the original CMU grading structure:
  *   Category A (5 pts) - Feature tests
- *   Category B (3 pts) - Sequential correctness
+ *   Category B (4 pts) - Sequential correctness
  *   Category C (3 pts) - Concurrent correctness
  *   Performance  (10 pts) - Concurrent throughput benchmark
  *   Style        (4 pts) - Manual review (not auto-graded)

@@ -87,6 +87,10 @@ trace-run: lua-runner
 	@sh local/run-lua-traces.sh
 .PHONY: trace-run
 
+trace-json: lua-runner
+	@sh local/run-lua-traces.sh --json
+.PHONY: trace-json
+
 trace-smoke: lua-runner
 	@sh local/run-lua-traces.sh \
 	  traces/A/A00_format_mount.lua \

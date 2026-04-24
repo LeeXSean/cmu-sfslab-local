@@ -14,6 +14,9 @@ Performance only runs after all correctness traces pass.
 
 Run `make trace-list` to print the current local autograder items.
 Run `make json` to print a machine-readable score summary.
+Run `make trace-json` to print machine-readable Lua trace coverage. Lua trace
+coverage is useful for comparing against the official trace style, but it is
+reported separately and is not added to the 22-point local score.
 
 ## How To Read The Score
 
@@ -30,4 +33,5 @@ WSL, filesystem latency, scheduler noise, and CPU load.
 
 - Add more A/B/C traces before adding more performance thresholds.
 - Expand the Lua trace catalog now that `traces/` can run locally.
+- Add expected-fail and starter-safe metadata to the trace manifest.
 - Keep the local score separate from any official course score.

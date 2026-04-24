@@ -10,6 +10,7 @@ tsan_output.log
 
 # Local binaries
 sfs-fsck
+lua-sfs-runner
 test-sfs
 test-sfs-baseline
 test-sfs-tsan
