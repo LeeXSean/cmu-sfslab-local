@@ -6,8 +6,22 @@ if [ ! -x ./lua-sfs-runner ]; then
     exit 1
 fi
 
-if [ "$#" -gt 0 ]; then
-    exec ./lua-sfs-runner "$@"
+if [ "$#" -eq 0 ]; then
+    set -- $(find traces -type f -name '*.lua' | sort)
 fi
 
-find traces -type f -name '*.lua' | sort | xargs ./lua-sfs-runner
+total=0
+passed=0
+failed=0
+
+for trace in "$@"; do
+    total=$((total + 1))
+    if ./lua-sfs-runner "$trace"; then
+        passed=$((passed + 1))
+    else
+        failed=1
+    fi
+done
+
+printf 'trace-run: %d/%d traces passed\n' "$passed" "$total"
+exit "$failed"

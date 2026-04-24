@@ -244,6 +244,7 @@ int main(int argc, char **argv)
             failed = 1;
     }
 
-    printf("lua-sfs-runner: %d/%d traces passed\n", passed, total);
+    if (argc > 2)
+        printf("lua-sfs-runner: %d/%d traces passed\n", passed, total);
     return failed;
 }
