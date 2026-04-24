@@ -30,6 +30,7 @@ test-sfs-baseline: local/test-sfs.o local/sfs-baseline-ref.o sfs-support.o
 # scheduler noise). Keep BASELINE_RUNS odd so the median is one observed
 # value, not an interpolation. Override with: make baseline BASELINE_RUNS=N
 BASELINE_RUNS ?= 5
+STRESS_RUNS ?= 10
 
 baseline: test-sfs-baseline
 	@echo "Calibrating machine baseline ($(BASELINE_RUNS) runs, median)..."
@@ -71,6 +72,14 @@ grade: test-sfs test-sfs-baseline
 smoke: test-sfs
 	./test-sfs -q --smoke-only
 .PHONY: smoke
+
+stress: test-sfs
+	@i=1; while [ $$i -le $(STRESS_RUNS) ]; do \
+	  printf "stress run %d/%d\n" $$i $(STRESS_RUNS); \
+	  ./test-sfs -q --concurrency-only || exit $$?; \
+	  i=$$((i+1)); \
+	done
+.PHONY: stress
 
 check: handout-check starter-check trace-check manifest-check smoke
 .PHONY: check

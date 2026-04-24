@@ -55,6 +55,7 @@ The repository root also forwards common targets:
 
 ```bash
 make smoke
+make stress
 make check
 make json
 make report-json
@@ -63,6 +64,7 @@ make trace-smoke
 make trace-run
 make trace-json
 make docker-check
+make docker-stress
 make docker-report-json
 make docker-trace-smoke
 make docker-trace-run
@@ -86,6 +88,10 @@ JSON is still written to stdout.
 `make report-json` combines the local autograder JSON with the separate
 official-style Lua trace coverage. The local autograder remains the graded
 22-point score; trace coverage is diagnostic.
+
+`make stress` repeats the C concurrency traces and is expected to fail on
+implementations with nondeterministic concurrency bugs. The unmodified skeleton
+may fail this target.
 
 `make trace-smoke` builds the local Lua runner and executes the manifest's
 starter-safe Lua traces. `make trace-run` executes the full Lua-style trace catalog and is
@@ -115,6 +121,7 @@ The root Makefile wraps the same container flow:
 
 ```bash
 make docker-check
+make docker-stress
 make docker-report-json
 make docker-trace-smoke
 make docker-trace-run

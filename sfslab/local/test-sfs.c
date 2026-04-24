@@ -1404,6 +1404,7 @@ int main(int argc, char *argv[])
     int mode_tsan_only = 0;
     int mode_perf_only = 0;
     int mode_smoke_only = 0;
+    int mode_concurrency_only = 0;
     int mode_list_traces = 0;
     int mode_json = 0;
     for (int i = 1; i < argc; i++)
@@ -1418,6 +1419,8 @@ int main(int argc, char *argv[])
             mode_perf_only = 1;
         else if (strcmp(argv[i], "--smoke-only") == 0)
             mode_smoke_only = 1;
+        else if (strcmp(argv[i], "--concurrency-only") == 0)
+            mode_concurrency_only = 1;
         else if (strcmp(argv[i], "--list-traces") == 0)
             mode_list_traces = 1;
         else if (strcmp(argv[i], "--json") == 0)
@@ -1506,6 +1509,14 @@ int main(int argc, char *argv[])
         int smoke = run_category("Smoke", cat_a, 2);
         unlink(DISK_NAME);
         return (smoke == 2) ? 0 : 1;
+    }
+
+    if (mode_concurrency_only)
+    {
+        int c = run_category("C (Concurrent Correctness)", cat_c, 3);
+        unlink(DISK_NAME);
+        unlink(CONC_DISK);
+        return (c == 3) ? 0 : 1;
     }
 
     int a = run_category("A (Feature Tests)", cat_a, 5);

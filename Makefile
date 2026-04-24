@@ -31,6 +31,10 @@ grade:
 smoke:
 	$(MAKE) -C $(HANDOUT) smoke
 
+.PHONY: stress
+stress:
+	$(MAKE) -C $(HANDOUT) stress
+
 .PHONY: check
 check:
 	$(MAKE) -C $(HANDOUT) check
@@ -100,6 +104,10 @@ docker-shell: docker-image
 .PHONY: docker-check
 docker-check: docker-image
 	$(DOCKER_RUN) sh -c 'make clean && make check'
+
+.PHONY: docker-stress
+docker-stress: docker-image
+	$(DOCKER_RUN) sh -c 'make clean && make stress'
 
 .PHONY: docker-trace-smoke
 docker-trace-smoke: docker-image
