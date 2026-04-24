@@ -45,9 +45,9 @@ separate users.
 | `sfs-api.h` | API specification header. Read this carefully — do not modify. |
 | `sfs-disk.h` | On-disk data structures and constants. Read-only (unless tackling optional challenges). |
 | `sfs-support.c` | Low-level disk/mmap support routines. Provided — do not modify. |
-| `sfs-baseline-ref.c` | Naive reference implementation (handout code + one global mutex). Used by `make baseline` to calibrate the perf score for your machine. Do not modify. |
+| `local/sfs-baseline-ref.c` | Naive reference implementation (handout code + one global mutex). Used by `make baseline` to calibrate the perf score for your machine. Do not modify. |
 | `sfs-fsck.c` | Filesystem consistency checker. Run it on disk images to find structural bugs. |
-| `test-sfs.c` | Standalone test driver and autograder. Exercises all API functions, includes TSan race detection. |
+| `local/test-sfs.c` | Standalone test driver and autograder. Exercises all API functions, includes TSan race detection. |
 | `Makefile` | Build system. Builds `sfs-fsck`, `test-sfs`, and `test-sfs-baseline`. |
 
 ### 2.2 Building
@@ -358,7 +358,7 @@ If you want to run TSan manually for more detailed output:
 
 ```bash
 gcc -std=c11 -g -fsanitize=thread -pthread -D_GNU_SOURCE=1 \
-    -o test-sfs-tsan test-sfs.c sfs-disk.c sfs-support.c
+    -I. -o test-sfs-tsan local/test-sfs.c sfs-disk.c sfs-support.c
 ./test-sfs-tsan --tsan-only
 ```
 
@@ -397,7 +397,7 @@ still see the "spread exceeds 20%" warning, pick one (easiest first):
    would be measuring two different filesystems.
 2. **Raise the sample count.** `make baseline BASELINE_RUNS=11` tightens
    calibration at the cost of a longer one-time setup. For the scored run,
-   bump `PERF_SAMPLE_RUNS` in `test-sfs.c` and rebuild.
+   bump `PERF_SAMPLE_RUNS` in `local/test-sfs.c` and rebuild.
 3. **Exclude the project directory from Windows Defender** (Settings →
    Virus & threat protection → Exclusions). Removes one randomized source of
    latency spikes.
@@ -413,7 +413,7 @@ still exists, and `stat` may give a different answer again. This is the
 mount driver's metadata cache disagreeing with itself — not a bug you wrote.
 Fixes, easiest first:
 
-1. Extract under a fresh name: `tar xf sfslab-local-handout.tar && mv sfslab-local-handout work-dir`.
+1. Extract under a fresh name: `tar xf sfslab-handout.tar && mv sfslab work-dir`.
 2. Restart the container (`docker restart <name>` from the host, then re-enter).
 3. Long-term, move the project off the Windows bind mount (option 4 above).
 

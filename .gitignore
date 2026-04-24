@@ -1,0 +1,13 @@
+CMU15213-SFS-Lab-main/
+
+# Local build outputs
+*.o
+*.img
+*.log
+*.tmp
+test-sfs
+test-sfs-baseline
+sfs-fsck
+test-sfs-tsan
+.perf_baseline
+.perf_baseline.tmp

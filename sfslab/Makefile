@@ -1,10 +1,12 @@
 # -*- Makefile -*- for sfslab (local build)
 
+-include .labname.mk
+
 CC      = gcc
 
 LDFLAGS  = -O2 -g -pthread
 CFLAGS   = -std=c11 $(LDFLAGS) $(WARNINGS)
-CPPFLAGS = -D_GNU_SOURCE=1 -D_FORTIFY_SOURCE=2
+CPPFLAGS = -I. -D_GNU_SOURCE=1 -D_FORTIFY_SOURCE=2
 WARNINGS = -Werror -Wall -Wextra -Wpedantic -Wconversion
 WARNINGS += -Wstrict-prototypes -Wmissing-prototypes -Wwrite-strings
 WARNINGS += -Wno-unused-parameter
@@ -17,10 +19,10 @@ all: $(PROGRAMS)
 sfs-fsck: sfs-fsck.o
 	$(CC) $(LDFLAGS) -o $@ $^
 
-test-sfs: test-sfs.o sfs-disk.o sfs-support.o
+test-sfs: local/test-sfs.o sfs-disk.o sfs-support.o
 	$(CC) $(LDFLAGS) -o $@ $^
 
-test-sfs-baseline: test-sfs.o sfs-baseline-ref.o sfs-support.o
+test-sfs-baseline: local/test-sfs.o local/sfs-baseline-ref.o sfs-support.o
 	$(CC) $(LDFLAGS) -o $@ $^
 
 # Baseline calibration: run the benchmark BASELINE_RUNS times and write
@@ -50,12 +52,12 @@ baseline: test-sfs-baseline
 .PHONY: baseline
 
 clean:
-	-rm -f $(PROGRAMS) test-sfs-tsan *.o *.img tsan_output.log .perf_baseline .perf_baseline.tmp
+	-rm -f $(PROGRAMS) test-sfs-tsan *.o local/*.o *.img tsan_output.log .perf_baseline .perf_baseline.tmp
 .PHONY: clean
 
 ## cut here ##
 sfs-support.o: sfs-support.c sfs-disk.h
 sfs-disk.o: sfs-disk.c sfs-api.h sfs-disk.h
 sfs-fsck.o: sfs-fsck.c sfs-disk.h
-test-sfs.o: test-sfs.c sfs-api.h
-sfs-baseline-ref.o: sfs-baseline-ref.c sfs-api.h sfs-disk.h
+local/test-sfs.o: local/test-sfs.c sfs-api.h
+local/sfs-baseline-ref.o: local/sfs-baseline-ref.c sfs-api.h sfs-disk.h

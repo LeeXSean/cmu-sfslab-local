@@ -1,0 +1,44 @@
+#####################################################################
+# SFS Lab
+#
+# Student handout directory
+#####################################################################
+
+This directory contains the files needed to work through the SFS lab. It is
+arranged as a handout-style working directory: start here, edit `sfs-disk.c`,
+and use the provided tools to test your work.
+
+Student source file:
+
+    sfs-disk.c
+        This is the file you modify while doing the lab.
+
+Provided support files:
+
+    sfs-api.h
+        API specification for sfs-disk.c.
+
+    sfs-disk.h
+        On-disk data structures and constants.
+
+    sfs-support.c
+        Low-level disk image and mmap support.
+
+    sfs-fsck.c
+        Filesystem consistency checker.
+
+Offline-only local tools:
+
+    local/test-sfs.c
+        Standalone local autograder.
+
+    local/sfs-baseline-ref.c
+        Coarse-lock reference implementation for performance calibration.
+
+    Makefile
+        Builds the local tools. Run `make`, then `make baseline`, then
+        `./test-sfs`.
+
+Read SFS_Lab_Writeup.md for the lab narrative and
+local/OFFLINE_SELF_STUDY.md for the differences between this offline package
+and the course infrastructure.

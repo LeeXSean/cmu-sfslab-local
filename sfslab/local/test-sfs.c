@@ -822,7 +822,12 @@ static int load_baseline(struct baseline_info *info)
         size_t plen = strlen(prefix);
         if (strncmp(line, prefix, plen) == 0)
         {
-            snprintf(info->disk_dir, sizeof(info->disk_dir), "%s", line + plen);
+            const char *value = line + plen;
+            size_t n = strlen(value);
+            if (n >= sizeof(info->disk_dir))
+                n = sizeof(info->disk_dir) - 1;
+            memcpy(info->disk_dir, value, n);
+            info->disk_dir[n] = '\0';
             break;
         }
     }
@@ -972,7 +977,7 @@ static int run_tsan_check(void)
     char compile_cmd[512];
     snprintf(compile_cmd, sizeof compile_cmd,
              "gcc -std=c11 -g -fsanitize=thread -pthread -D_GNU_SOURCE=1 "
-             "-o %s test-sfs.c sfs-disk.c sfs-support.c 2>&1",
+             "-I. -o %s local/test-sfs.c sfs-disk.c sfs-support.c 2>&1",
              tsan_bin);
 
     int rc = system(compile_cmd);
