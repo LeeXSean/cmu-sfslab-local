@@ -21,6 +21,7 @@ cmu-sfslab-local/
     sfs-disk.h
     sfs-support.c
     sfs-fsck.c
+    traces/                # Lua-style trace catalog
     local/                 # offline-only replacement tooling
       test-sfs.c
       sfs-baseline-ref.c
@@ -48,8 +49,10 @@ not a packaging bug.
 
 CMU's course infrastructure uses Autolab and internal race/concurrency tooling.
 This offline version uses a C autograder, ThreadSanitizer when available, and a
-machine-local performance baseline. See `sfslab/local/OFFLINE_SELF_STUDY.md`
-for the boundary between handout code and local replacement tools.
+machine-local performance baseline. The `sfslab/traces/` files document the
+Lua-style test shape but are not executed yet. See
+`sfslab/local/OFFLINE_SELF_STUDY.md` for the boundary between handout code and
+local replacement tools.
 
 ## Disclaimer
 

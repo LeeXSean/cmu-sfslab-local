@@ -17,6 +17,8 @@ being runnable without CMU infrastructure.
   runner.
 - `local/sfs-baseline-ref.c` is a coarse-lock reference used only for local
   performance calibration.
+- `traces/` contains Lua-style trace fixtures for documentation and future
+  runner work. They are not executed by the current local grader.
 - `make baseline` writes `.perf_baseline` so performance is scored against the
   current machine instead of CMU's Autolab hardware.
 - ThreadSanitizer is used locally as the race detector when available.

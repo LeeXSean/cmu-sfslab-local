@@ -27,6 +27,10 @@ Provided support files:
     sfs-fsck.c
         Filesystem consistency checker.
 
+    traces/
+        Lua-style trace catalog. These files document the intended A/B/C test
+        shape but are not executed by the current local grader.
+
 Offline-only local tools:
 
     local/test-sfs.c
