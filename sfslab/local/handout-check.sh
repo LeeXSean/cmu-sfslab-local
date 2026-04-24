@@ -17,6 +17,7 @@ for path in \
     local/lua-sfs-runner.c \
     local/report-json.sh \
     local/run-lua-traces.sh \
+    local/DEV_NOTES.md \
     local/OFFLINE_SELF_STUDY.md \
     local/SCORING.md \
     traces/README.md

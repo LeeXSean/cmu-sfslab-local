@@ -26,6 +26,7 @@ cmu-sfslab-local/
       test-sfs.c
       sfs-baseline-ref.c
       OFFLINE_SELF_STUDY.md
+      DEV_NOTES.md
   sfslab-handout.tar       # packaged copy of sfslab/
 ```
 
@@ -136,7 +137,8 @@ machine-local performance baseline. The `sfslab/traces/` files are executable
 Lua-style fixtures for the local runner. See
 `sfslab/local/OFFLINE_SELF_STUDY.md` for the boundary between handout code and
 local replacement tools. See `sfslab/local/SCORING.md` for how to read the
-local score.
+local score. Maintainer-only follow-up notes live in
+`sfslab/local/DEV_NOTES.md`.
 
 ## Disclaimer
 

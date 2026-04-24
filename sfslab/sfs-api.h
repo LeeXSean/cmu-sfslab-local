@@ -5,11 +5,8 @@
 
     Do not change anything in this file.  */
 
-// TODO (lab devs only):
-//   - Missing functionality: get file size (fstat), set file size (ftruncate)
-//   - Consider making the "file descriptor" be a newtype, as best we can
-//     in C (struct { int n; }) so it can't be confused with OS fds.  Might
-//     be too annoying.
+/* Local port maintainers: historical API expansion notes are tracked in
+   local/DEV_NOTES.md.  The student-facing API below is intentionally stable.  */
 
 #ifndef SFS_API_H_
 #define SFS_API_H_ 1

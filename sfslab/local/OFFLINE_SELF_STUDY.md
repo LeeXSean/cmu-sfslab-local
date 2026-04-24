@@ -28,6 +28,8 @@ being runnable without CMU infrastructure.
   coverage, not as part of the local 22-point score.
 - `make report-json` combines the local score and Lua trace coverage into one
   machine-readable report.
+- `local/DEV_NOTES.md` records maintainer-only decisions that should not become
+  accidental student requirements.
 - The repository root `Dockerfile` provides a Linux toolchain for builds,
   ThreadSanitizer runs, and Lua trace execution.
 - `local/SCORING.md` explains why the local score is a self-study signal, not
