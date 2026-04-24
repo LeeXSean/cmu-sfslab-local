@@ -20,8 +20,8 @@ being runnable without CMU infrastructure.
 - `traces/` contains Lua-style trace fixtures for documentation and future
   runner work.
 - `make starter-safe` is the starter health check: it runs the C smoke traces
-  and, when the Lua development dependencies are available, the starter-safe
-  Lua traces.
+  and the starter-safe Lua traces. From the repository root, Lua traces fall
+  back to Docker when local Lua development dependencies are missing.
 - `make trace-smoke` executes the starter-safe Lua traces. `make trace-run`
   executes the full Lua-style catalog and is expected to fail on the
   unmodified skeleton. The local binding includes a synchronous fallback for
@@ -34,7 +34,8 @@ being runnable without CMU infrastructure.
 - `local/DEV_NOTES.md` records maintainer-only decisions that should not become
   accidental student requirements.
 - The repository root `Dockerfile` provides a Linux toolchain for builds,
-  ThreadSanitizer runs, and Lua trace execution.
+  ThreadSanitizer runs, and Lua trace execution. Root trace targets use it as
+  a fallback when the host is missing Lua headers or `pkg-config`.
 - `local/SCORING.md` explains why the local score is a self-study signal, not
   an official score prediction.
 - `make smoke`, `make grade`, and `make trace-check` are convenience targets

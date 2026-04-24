@@ -74,10 +74,15 @@ smoke: test-sfs sfs-fsck
 .PHONY: smoke
 
 starter-safe: starter-check smoke
-	@if sh local/build-lua-runner.sh >/dev/null 2>&1; then \
-	  sh local/run-lua-traces.sh --starter-safe; \
+	@if sh local/run-lua-with-fallback.sh starter-safe; then \
+	  :; \
 	else \
-	  echo "starter-safe: Lua runner unavailable; skipping Lua starter-safe traces"; \
+	  status=$$?; \
+	  if [ $$status -eq 77 ]; then \
+	    echo "starter-safe: Lua runner unavailable; skipping Lua starter-safe traces"; \
+	  else \
+	    exit $$status; \
+	  fi; \
 	fi
 .PHONY: starter-safe
 

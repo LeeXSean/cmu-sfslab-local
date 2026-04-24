@@ -62,8 +62,9 @@ Useful make targets:
         Build and run the two starter traces that should pass on the skeleton.
 
     make starter-safe
-        Run the starter-safe C smoke checks and, when Lua development
-        dependencies are installed, the starter-safe Lua traces.
+        Run the starter-safe C smoke checks and the starter-safe Lua traces.
+        From the repository root, Lua traces fall back to Docker when local Lua
+        development dependencies are missing.
 
     make check
         Run smoke, trace-check, handout-check, and starter-check.
@@ -72,7 +73,9 @@ Useful make targets:
         Syntax-check Lua-style traces when `luac` is installed.
 
     make trace-run
-        Build the local Lua runner and execute the Lua-style traces.
+        Build the local Lua runner and execute the Lua-style traces. From the
+        repository root, this falls back to Docker when local Lua development
+        dependencies are missing.
 
     make trace-smoke
         Execute only the Lua traces that should pass on the starter.

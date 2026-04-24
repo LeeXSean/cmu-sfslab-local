@@ -57,15 +57,15 @@ lua-runner:
 
 .PHONY: trace-run
 trace-run:
-	$(MAKE) -C $(HANDOUT) trace-run
+	@sh $(HANDOUT)/local/run-lua-with-fallback.sh run
 
 .PHONY: trace-json
 trace-json:
-	@$(MAKE) -s -C $(HANDOUT) trace-json
+	@sh $(HANDOUT)/local/run-lua-with-fallback.sh json
 
 .PHONY: trace-smoke
 trace-smoke:
-	$(MAKE) -C $(HANDOUT) trace-smoke
+	@sh $(HANDOUT)/local/run-lua-with-fallback.sh smoke
 
 .PHONY: manifest-check
 manifest-check:
@@ -118,17 +118,19 @@ docker-stress: docker-image
 	$(DOCKER_RUN) sh -c 'make clean && make stress'
 
 .PHONY: docker-trace-smoke
-docker-trace-smoke: docker-image
-	$(DOCKER_RUN) sh -c 'make clean && make trace-smoke'
+docker-trace-smoke:
+	@docker build -q -t $(DOCKER_IMAGE) . >/dev/null
+	@$(DOCKER_RUN) sh -c 'make -s clean >/dev/null && cd $(HANDOUT) && make -s lua-runner >/dev/null && sh local/run-lua-traces.sh --starter-safe; status=$$?; make -s clean >/dev/null; exit $$status'
 
 .PHONY: docker-trace-run
-docker-trace-run: docker-image
-	$(DOCKER_RUN) sh -c 'make clean && make trace-run'
+docker-trace-run:
+	@docker build -q -t $(DOCKER_IMAGE) . >/dev/null
+	@$(DOCKER_RUN) sh -c 'make -s clean >/dev/null && cd $(HANDOUT) && make -s lua-runner >/dev/null && sh local/run-lua-traces.sh; status=$$?; make -s clean >/dev/null; exit $$status'
 
 .PHONY: docker-trace-json
 docker-trace-json:
 	@docker build -q -t $(DOCKER_IMAGE) . >/dev/null
-	@$(DOCKER_RUN) sh -c 'make -s clean >/dev/null && cd $(HANDOUT) && make -s lua-runner >/dev/null && sh local/run-lua-traces.sh --json'
+	@$(DOCKER_RUN) sh -c 'make -s clean >/dev/null && cd $(HANDOUT) && make -s lua-runner >/dev/null && sh local/run-lua-traces.sh --json; status=$$?; make -s clean >/dev/null; exit $$status'
 
 .PHONY: docker-report-json
 docker-report-json:

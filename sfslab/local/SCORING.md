@@ -22,6 +22,9 @@ Run `make json` to print a machine-readable score summary.
 Run `make trace-json` to print machine-readable Lua trace coverage. Lua trace
 coverage is useful for comparing against the official trace style, but it is
 reported separately and is not added to the 22-point local score.
+From the repository root, `make trace-run`, `make trace-smoke`, and
+`make trace-json` fall back to Docker when local Lua development dependencies
+are missing.
 Run `make report-json` to print both reports in one JSON document.
 Run `make starter-safe` to check that the packaged starter and starter-safe
 trace subset still run. This is the package health check; it is not a score.
