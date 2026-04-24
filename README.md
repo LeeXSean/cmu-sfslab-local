@@ -60,6 +60,9 @@ make json
 make trace-check
 make trace-smoke
 make trace-run
+make docker-check
+make docker-trace-smoke
+make docker-trace-run
 make trace-list
 make manifest-check
 make handout-check
@@ -81,6 +84,12 @@ Lua traces. `make trace-run` executes the full Lua-style trace catalog and is
 expected to fail on the unmodified skeleton. Both need `pkg-config` and Lua
 development headers.
 
+On Debian or Ubuntu, install those trace-runner dependencies with:
+
+```bash
+sudo apt-get install pkg-config lua5.4 liblua5.4-dev
+```
+
 The unmodified skeleton is expected to fail the tests for `sfs_getpos`,
 `sfs_seek`, and `sfs_rename`. Those failures are the starting point of the lab,
 not a packaging bug.
@@ -92,12 +101,20 @@ docker build -t sfslab-offline .
 docker run --rm -it -v "$PWD:/work" -w /work/sfslab sfslab-offline
 ```
 
+The root Makefile wraps the same container flow:
+
+```bash
+make docker-check
+make docker-trace-smoke
+make docker-trace-run
+```
+
 ## What Is Local-Only
 
 CMU's course infrastructure uses Autolab and internal race/concurrency tooling.
 This offline version uses a C autograder, ThreadSanitizer when available, and a
-machine-local performance baseline. The `sfslab/traces/` files document the
-Lua-style test shape but are not executed yet. See
+machine-local performance baseline. The `sfslab/traces/` files are executable
+Lua-style fixtures for the local runner. See
 `sfslab/local/OFFLINE_SELF_STUDY.md` for the boundary between handout code and
 local replacement tools. See `sfslab/local/SCORING.md` for how to read the
 local score.

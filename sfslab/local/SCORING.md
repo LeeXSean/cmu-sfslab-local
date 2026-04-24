@@ -29,5 +29,5 @@ WSL, filesystem latency, scheduler noise, and CPU load.
 ## Future Work
 
 - Add more A/B/C traces before adding more performance thresholds.
-- Add a Lua runner so `traces/` can become executable fixtures.
+- Expand the Lua trace catalog now that `traces/` can run locally.
 - Keep the local score separate from any official course score.

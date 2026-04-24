@@ -3,6 +3,7 @@ set -eu
 
 if ! command -v pkg-config >/dev/null 2>&1; then
     echo "lua-runner: pkg-config not found"
+    echo "lua-runner: install pkg-config, lua5.4, and liblua5.4-dev"
     exit 77
 fi
 
@@ -16,6 +17,7 @@ done
 
 if [ -z "$pkg" ]; then
     echo "lua-runner: Lua development package not found"
+    echo "lua-runner: install pkg-config, lua5.4, and liblua5.4-dev"
     exit 77
 fi
 

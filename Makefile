@@ -3,6 +3,9 @@
 HANDOUT = sfslab
 DIST = sfslab-handout.tar
 DIST_MTIME = 2024-01-01 00:00Z
+DOCKER_IMAGE ?= sfslab-offline
+DOCKER_WORKDIR ?= /work
+DOCKER_RUN = docker run --rm -v "$(CURDIR):$(DOCKER_WORKDIR)" -w $(DOCKER_WORKDIR) $(DOCKER_IMAGE)
 
 .PHONY: all
 all:
@@ -77,3 +80,23 @@ dist:
 	else \
 	  tar -cf $(DIST) $(HANDOUT); \
 	fi
+
+.PHONY: docker-image
+docker-image:
+	docker build -t $(DOCKER_IMAGE) .
+
+.PHONY: docker-shell
+docker-shell: docker-image
+	docker run --rm -it -v "$(CURDIR):$(DOCKER_WORKDIR)" -w $(DOCKER_WORKDIR)/$(HANDOUT) $(DOCKER_IMAGE)
+
+.PHONY: docker-check
+docker-check: docker-image
+	$(DOCKER_RUN) make check
+
+.PHONY: docker-trace-smoke
+docker-trace-smoke: docker-image
+	$(DOCKER_RUN) make trace-smoke
+
+.PHONY: docker-trace-run
+docker-trace-run: docker-image
+	$(DOCKER_RUN) make trace-run

@@ -25,7 +25,7 @@ being runnable without CMU infrastructure.
   `lanes.gen`; the C autograder remains the source of real concurrent stress
   testing.
 - The repository root `Dockerfile` provides a Linux toolchain for builds,
-  ThreadSanitizer runs, and future Lua trace work.
+  ThreadSanitizer runs, and Lua trace execution.
 - `local/SCORING.md` explains why the local score is a self-study signal, not
   an official score prediction.
 - `make smoke`, `make grade`, and `make trace-check` are convenience targets
