@@ -14,7 +14,8 @@ Performance only runs after all correctness traces pass.
 
 Correctness traces also run `sfs-fsck` after unmounting their disk image. A
 trace fails if the visible API result looks right but the filesystem structure
-is corrupt.
+is corrupt, and the trace failure includes the first captured checker
+diagnostic.
 
 Run `make trace-list` to print the current local autograder items.
 Run `make json` to print a machine-readable score summary.

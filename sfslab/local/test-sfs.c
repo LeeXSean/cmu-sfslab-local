@@ -129,25 +129,63 @@ static size_t disk_size(void)
     return (size_t)ps * 64;
 }
 
-static int run_fsck_quiet(const char *disk_name)
+static void compact_fsck_output(char out[])
 {
+    char *w = out;
+    int in_space = 0;
+    for (char *r = out; *r; r++)
+    {
+        unsigned char c = (unsigned char)*r;
+        if (c == '\n' || c == '\r' || c == '\t')
+            c = ' ';
+
+        if (c == ' ')
+        {
+            if (in_space)
+                continue;
+            in_space = 1;
+        }
+        else
+        {
+            in_space = 0;
+        }
+        *w++ = (char)c;
+    }
+    *w = '\0';
+}
+
+static int run_fsck_capture(const char *disk_name, char out[], size_t cap)
+{
+    if (cap > 0)
+        out[0] = '\0';
+
     fflush(stdout);
     fflush(stderr);
 
+    char path[] = "/tmp/sfslab-fsck.XXXXXX";
+    int out_fd = mkstemp(path);
+    if (out_fd < 0)
+    {
+        snprintf(out, cap, "mkstemp failed: %s", strerror(errno));
+        return -1;
+    }
+
     pid_t pid = fork();
     if (pid < 0)
+    {
+        close(out_fd);
+        unlink(path);
+        snprintf(out, cap, "fork failed: %s", strerror(errno));
         return -1;
+    }
 
     if (pid == 0)
     {
-        int devnull = open("/dev/null", O_WRONLY);
-        if (devnull >= 0)
-        {
-            dup2(devnull, STDOUT_FILENO);
-            dup2(devnull, STDERR_FILENO);
-            close(devnull);
-        }
-        execl("./sfs-fsck", "sfs-fsck", disk_name, (char *)NULL);
+        dup2(out_fd, STDOUT_FILENO);
+        dup2(out_fd, STDERR_FILENO);
+        close(out_fd);
+        execlp("timeout", "timeout", "5s", "./sfs-fsck", disk_name,
+               (char *)NULL);
         _exit(errno == ENOENT ? 127 : 126);
     }
 
@@ -158,8 +196,27 @@ static int run_fsck_quiet(const char *disk_name)
         if (r == pid)
             break;
         if (r < 0 && errno != EINTR)
+        {
+            close(out_fd);
+            unlink(path);
             return -1;
+        }
     }
+
+    if (cap > 0)
+    {
+        if (lseek(out_fd, 0, SEEK_SET) >= 0)
+        {
+            ssize_t n = read(out_fd, out, cap - 1);
+            if (n > 0)
+                out[n] = '\0';
+            else
+                out[0] = '\0';
+        }
+    }
+    close(out_fd);
+    unlink(path);
+    compact_fsck_output(out);
 
     if (WIFEXITED(status))
         return WEXITSTATUS(status);
@@ -170,8 +227,13 @@ static int run_fsck_quiet(const char *disk_name)
 
 static void check_disk_consistency(const char *disk_name)
 {
-    int rc = run_fsck_quiet(disk_name);
-    CHECK(rc == 0, "sfs-fsck failed on %s (exit %d)", disk_name, rc);
+    char detail[384];
+    int rc = run_fsck_capture(disk_name, detail, sizeof detail);
+    if (rc == 0)
+        return;
+    if (detail[0] == '\0')
+        snprintf(detail, sizeof detail, "no diagnostic output captured");
+    CHECK(0, "sfs-fsck failed on %s (exit %d): %s", disk_name, rc, detail);
 }
 
 static void unmount_and_check(const char *disk_name)

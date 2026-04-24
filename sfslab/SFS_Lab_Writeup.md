@@ -235,7 +235,8 @@ The autograder is organized into the same categories as the original:
 
 Each correctness trace also runs `sfs-fsck` after unmounting its disk image.
 This catches structural corruption such as orphaned blocks or inconsistent
-block links even when the immediate API result appeared to be correct.
+block links even when the immediate API result appeared to be correct. When
+this happens, the trace failure includes the first captured checker diagnostic.
 
 Sample output (before implementing anything):
 

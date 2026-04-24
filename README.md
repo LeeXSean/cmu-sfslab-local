@@ -88,7 +88,7 @@ JSON is still written to stdout.
 
 Correctness traces also run `sfs-fsck` after unmounting their disk images, so
 metadata corruption can fail a trace even when the last read/write result looked
-right.
+right. The failure detail includes the first captured checker diagnostic.
 
 `make report-json` combines the local autograder JSON with the separate
 official-style Lua trace coverage. The local autograder remains the graded
