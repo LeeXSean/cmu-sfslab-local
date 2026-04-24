@@ -12,6 +12,8 @@ The local score is a self-study signal, not an Autolab prediction.
 
 Performance only runs after all correctness traces pass.
 
+Run `make trace-list` to print the current local autograder items.
+
 ## How To Read The Score
 
 Prioritize correctness first. A fast implementation with failing A/B/C traces

@@ -71,6 +71,10 @@ trace-check:
 	@sh local/check-traces.sh
 .PHONY: trace-check
 
+trace-list: test-sfs
+	./test-sfs --list-traces
+.PHONY: trace-list
+
 handout-check:
 	@sh local/handout-check.sh
 .PHONY: handout-check

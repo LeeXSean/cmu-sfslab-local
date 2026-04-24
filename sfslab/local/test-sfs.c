@@ -1322,6 +1322,7 @@ int main(int argc, char *argv[])
     int mode_tsan_only = 0;
     int mode_perf_only = 0;
     int mode_smoke_only = 0;
+    int mode_list_traces = 0;
     for (int i = 1; i < argc; i++)
     {
         if (strcmp(argv[i], "-q") == 0 || strcmp(argv[i], "--quiet") == 0)
@@ -1334,6 +1335,8 @@ int main(int argc, char *argv[])
             mode_perf_only = 1;
         else if (strcmp(argv[i], "--smoke-only") == 0)
             mode_smoke_only = 1;
+        else if (strcmp(argv[i], "--list-traces") == 0)
+            mode_list_traces = 1;
         else
             fprintf(stderr, "warning: unknown argument '%s' (ignored)\n", argv[i]);
     }
@@ -1364,10 +1367,6 @@ int main(int argc, char *argv[])
         return 0;
     }
 
-    printf("========================================\n");
-    printf("        SFS Lab Autograder\n");
-    printf("========================================\n");
-
     struct trace_entry cat_a[] = {
         {"A00", "format_mount", trace_A00},
         {"A01", "open_close_rw", trace_A01},
@@ -1388,6 +1387,23 @@ int main(int argc, char *argv[])
         {"C01", "read_same_file", trace_C01},
         {"C02", "rw_mix_storm", trace_C02},
     };
+
+    if (mode_list_traces)
+    {
+        printf("category\tid\tname\tpoints\n");
+        for (int i = 0; i < 5; i++)
+            printf("A\t%s\t%s\t1\n", cat_a[i].id, cat_a[i].name);
+        for (int i = 0; i < 4; i++)
+            printf("B\t%s\t%s\t1\n", cat_b[i].id, cat_b[i].name);
+        for (int i = 0; i < 3; i++)
+            printf("C\t%s\t%s\t1\n", cat_c[i].id, cat_c[i].name);
+        printf("Perf\tbenchmark\tthroughput\t10\n");
+        return 0;
+    }
+
+    printf("========================================\n");
+    printf("        SFS Lab Autograder\n");
+    printf("========================================\n");
 
     if (mode_smoke_only)
     {

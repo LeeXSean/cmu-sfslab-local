@@ -28,6 +28,10 @@ check:
 trace-check:
 	$(MAKE) -C $(HANDOUT) trace-check
 
+.PHONY: trace-list
+trace-list:
+	$(MAKE) -C $(HANDOUT) trace-list
+
 .PHONY: handout-check
 handout-check:
 	$(MAKE) -C $(HANDOUT) handout-check

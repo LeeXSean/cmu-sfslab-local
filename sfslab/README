@@ -63,6 +63,9 @@ Useful make targets:
     make trace-check
         Syntax-check Lua-style traces when `luac` is installed.
 
+    make trace-list
+        Print the local autograder traces and point values as TSV.
+
     make handout-check
         Check that the handout has required files and no generated artifacts.
 
