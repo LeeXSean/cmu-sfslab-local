@@ -233,10 +233,17 @@ int main(int argc, char **argv)
     }
 
     int failed = 0;
+    int passed = 0;
+    int total = 0;
     for (int i = 1; i < argc; i++)
     {
-        if (run_trace(argv[i]) != 0)
+        total++;
+        if (run_trace(argv[i]) == 0)
+            passed++;
+        else
             failed = 1;
     }
+
+    printf("lua-sfs-runner: %d/%d traces passed\n", passed, total);
     return failed;
 }
