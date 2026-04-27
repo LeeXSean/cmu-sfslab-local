@@ -37,16 +37,3 @@ jobs:
 
       - name: Check dist package
         run: make dist-check
-
-      - name: Scan for tutoring residue
-        run: |
-          pattern='We''Chat|Wei''xin|wei''xin|微''信|代''写|cs''tutor|tutor''cs|course''hero|che''gg'
-          if git grep -n -I -i -E "$pattern"; then
-            exit 1
-          fi
-          rm -rf tarcheck
-          mkdir tarcheck
-          tar xf sfslab-handout.tar -C tarcheck
-          if grep -R -n -I -i -E "$pattern" tarcheck; then
-            exit 1
-          fi

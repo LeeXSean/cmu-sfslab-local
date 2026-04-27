@@ -32,8 +32,6 @@ being runnable without CMU infrastructure.
 - `make report-json` combines the local score, Lua trace coverage, and stress
   diagnostics into one machine-readable report. Only the local autograder
   section is the graded 22-point score.
-- `local/DEV_NOTES.md` records maintainer-only decisions that should not become
-  accidental student requirements.
 - The repository root `Dockerfile` provides a Linux toolchain for builds,
   ThreadSanitizer runs, and Lua trace execution. Root trace targets use it as
   a fallback when the host is missing Lua headers or `pkg-config`.

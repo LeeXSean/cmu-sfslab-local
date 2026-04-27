@@ -54,12 +54,3 @@ The performance score compares your implementation to the local
 `sfs-baseline-ref.c` coarse-lock implementation on the same machine. It is
 useful for tracking progress on one setup, but it is still affected by Docker,
 WSL, filesystem latency, scheduler noise, and CPU load.
-
-## Future Work
-
-- Add more A/B/C traces before adding more performance thresholds.
-- Expand the Lua trace catalog now that `traces/` can run locally.
-- Use the trace manifest's starter metadata to keep smoke checks aligned with
-  the Lua catalog.
-- Keep schedule-sensitive stress diagnostics out of the local 22-point score.
-- Keep the local score separate from any official course score.

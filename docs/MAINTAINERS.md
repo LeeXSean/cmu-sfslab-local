@@ -1,4 +1,4 @@
-# Local Development Notes
+# Maintainer Notes
 
 These notes are for maintaining the offline self-study port. They are not part
 of the student solution.
@@ -39,6 +39,8 @@ not as assignment requirements.
 - Add more correctness traces before changing score weights.
 - Keep Lua trace coverage diagnostic until it matches the C autograder's
   concurrency signal.
+- Use the trace manifest's starter metadata to keep smoke checks aligned with
+  the Lua catalog.
 - Keep schedule-sensitive concurrency churn in stress-only diagnostics, not in
   the main local score.
 - Keep report formatting in `test-report.c` so `test-sfs.c` stays focused on

@@ -20,7 +20,6 @@ for path in \
     local/report-json.sh \
     local/run-lua-traces.sh \
     local/run-lua-with-fallback.sh \
-    local/DEV_NOTES.md \
     local/OFFLINE_SELF_STUDY.md \
     local/SCORING.md \
     traces/README.md

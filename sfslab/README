@@ -102,5 +102,4 @@ Useful make targets:
 Read SFS_Lab_Writeup.md for the lab narrative and
 local/OFFLINE_SELF_STUDY.md for the differences between this offline package
 and the course infrastructure. Read local/SCORING.md before treating a local
-score as meaningful. Maintainer-only follow-up notes live in
-local/DEV_NOTES.md.
+score as meaningful.

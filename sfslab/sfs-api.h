@@ -5,9 +5,6 @@
 
     Do not change anything in this file.  */
 
-/* Local port maintainers: historical API expansion notes are tracked in
-   local/DEV_NOTES.md.  The student-facing API below is intentionally stable.  */
-
 #ifndef SFS_API_H_
 #define SFS_API_H_ 1
 
