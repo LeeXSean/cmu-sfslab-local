@@ -28,23 +28,24 @@ are missing.
 Run `make report-json` to print both reports in one JSON document.
 Run `make starter-safe` to check that the packaged starter and starter-safe
 trace subset still run. This is the package health check; it is not a score.
-Run `make stress` to repeat the C concurrency traces without running the full
-scoreboard; override the loop count with `STRESS_RUNS=N`. A failure here means
-the implementation is not stable under repeated concurrent schedules. `stress`
-is for testing an implementation after you start fixing concurrency, not for
-proving that the starter is complete. The C concurrency traces use isolated disk
-images so one trace's cleanup path does not contaminate the next trace.
+Run `make stress` to repeat the C concurrency traces and extra stress-only
+diagnostics without running the full scoreboard; override the loop count with
+`STRESS_RUNS=N`. A failure here means the implementation is not stable under
+repeated concurrent schedules. `stress` is for testing an implementation after
+you start fixing concurrency, not for proving that the starter is complete. The
+C concurrency and stress-only diagnostics use isolated disk images so one
+trace's cleanup path does not contaminate the next trace.
 
 ## How To Read The Score
 
 Prioritize correctness first. A fast implementation with failing A/B/C traces
-is not useful. ThreadSanitizer runs after all normal C traces pass; the JSON
-report records `tsan_status` as `clean`, `race_detected`, `trace_failed`,
-`timeout`, `skipped`, or `unavailable`. A TSan race, TSan trace failure, or
-TSan timeout sets the C score to zero. If a normal C trace already fails, TSan
-is skipped and the normal per-trace C score is reported. Use the performance
-score only after the implementation is stable under the sequential tests,
-concurrent traces, and ThreadSanitizer.
+is not useful. ThreadSanitizer runs after all normal A/B/C correctness traces
+pass; the JSON report records `tsan_status` as `clean`, `race_detected`,
+`trace_failed`, `timeout`, `skipped`, or `unavailable`. A TSan race, TSan trace
+failure, or TSan timeout sets the C score to zero. If a normal correctness
+trace already fails, TSan is skipped and the normal per-trace score is
+reported. Use the performance score only after the implementation is stable
+under the sequential tests, concurrent traces, and ThreadSanitizer.
 
 The performance score compares your implementation to the local
 `sfs-baseline-ref.c` coarse-lock implementation on the same machine. It is
@@ -57,4 +58,5 @@ WSL, filesystem latency, scheduler noise, and CPU load.
 - Expand the Lua trace catalog now that `traces/` can run locally.
 - Use the trace manifest's starter metadata to keep smoke checks aligned with
   the Lua catalog.
+- Keep schedule-sensitive stress diagnostics out of the local 22-point score.
 - Keep the local score separate from any official course score.

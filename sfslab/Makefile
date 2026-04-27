@@ -90,6 +90,7 @@ stress: test-sfs sfs-fsck
 	@i=1; while [ $$i -le $(STRESS_RUNS) ]; do \
 	  printf "stress run %d/%d\n" $$i $(STRESS_RUNS); \
 	  ./test-sfs -q --concurrency-only || exit $$?; \
+	  ./test-sfs -q --stress-only || exit $$?; \
 	  i=$$((i+1)); \
 	done
 .PHONY: stress

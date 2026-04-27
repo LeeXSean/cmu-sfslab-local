@@ -241,7 +241,7 @@ The autograder is organized into the same categories as the original:
 |----------|--------|--------|---------------|
 | A (Feature Tests) | A00-A04 | 5 | format/mount, open/close/rw, getpos, seek, rename |
 | B (Sequential Correctness) | B00-B03 | 4 | remove/list/reuse, multi-block seek + cross-boundary read, fd errors, open-file lifecycle, rename/list/reuse checks |
-| C (Concurrent Correctness) | C00-C02 | 3 | separate-file writes, shared reads, r/w mix + open/list/remove storm |
+| C (Concurrent Correctness) | C00-C02 | 3 | separate-file writes, shared reads, r/w mix + open/close storm |
 | Performance | benchmark | 10 | Concurrent throughput (only runs if correctness = 12/12) |
 | Style | -- | 4 | Manual self-review (not auto-graded) |
 
@@ -279,20 +279,20 @@ Category B (Sequential Correctness):
 Category C (Concurrent Correctness):
   C00 separate_files          PASS  [1/1]
   C01 read_same_file          PASS  [1/1]
-  C02 rw_mix_storm            FAIL  [0/1]
-  Subtotal: 2/3
+  C02 rw_mix_storm            PASS  [1/1]
+  Subtotal: 3/3
 
 Race Detection (ThreadSanitizer):
-  (skipped -- concurrent correctness traces must all pass first)
+  (skipped -- normal correctness traces must all pass first)
 
-Correctness: 5/12
+Correctness: 6/12
 
 Performance:
   (skipped -- correctness tests must all pass first)
   Score: 0/10
 
 ----------------------------------------
-  Total: 5/22  (+ up to 4 style pts)
+  Total: 6/22  (+ up to 4 style pts)
 ========================================
 ```
 
@@ -311,12 +311,13 @@ Flags can appear in any order and combine with `--tsan-only`.
 (`--perf-only` only emits a single ops/sec number, so verbosity has no
 effect there.)
 
-**Note on Category C:** After the normal C traces all pass, the autograder automatically
-compiles a ThreadSanitizer build and re-runs the concurrent tests. If TSan detects any
-data races, the Category C score is set to 0 -- even if the normal traces appeared to
-pass. This mirrors the original CMU ConTech-based race detection. If a normal C trace
-already fails, TSan is skipped and the normal per-trace C score is reported. If your
-system does not support `-fsanitize=thread`, the TSan check is skipped without penalty.
+**Note on Category C:** After the normal A/B/C correctness traces all pass, the
+autograder automatically compiles a ThreadSanitizer build and re-runs the concurrent
+tests. If TSan detects any data races, the Category C score is set to 0 -- even if the
+normal traces appeared to pass. This mirrors the original CMU ConTech-based race
+detection. If a normal correctness trace already fails, TSan is skipped and the normal
+per-trace score is reported. If your system does not support `-fsanitize=thread`, the
+TSan check is skipped without penalty.
 
 The performance benchmark uses 8 threads each doing 100 open/write/seek/read/close
 cycles. The benchmark is **sampled 5 times and the median ops/sec is scored**,
@@ -347,8 +348,12 @@ concurrency images after timeout/crash paths, which keeps repeated stress runs
 from inheriting leftover state from the previous trace.
 
 `make stress` is for testing an implementation after you start fixing
-concurrency. It is stricter than the starter health check, and the unmodified
-skeleton may fail it.
+concurrency. It repeats the scored C concurrency traces and then runs
+stress-only diagnostics such as concurrent directory churn while another thread
+lists. These diagnostics are intentionally outside the 22-point score because
+they are more schedule-sensitive than the core correctness signal. `make
+stress` is stricter than the starter health check, and the unmodified skeleton
+may fail it.
 
 **Deadlock protection:** Each Category C trace runs in a forked child with a
 30-second wall-clock budget; the perf benchmark gets 60 seconds. If a child
@@ -379,7 +384,9 @@ It checks for:
 ### 5.3 Concurrency Testing
 
 The autograder automatically compiles a ThreadSanitizer build and re-runs the Category C
-traces after the normal test run. If TSan detects data races, the C score is set to 0.
+traces after the normal A/B/C correctness suite passes. If TSan detects data races, the
+C score is set to 0. If any normal correctness trace fails, TSan is skipped so the first
+fix remains the visible correctness failure.
 
 If you want to run TSan manually for more detailed output:
 

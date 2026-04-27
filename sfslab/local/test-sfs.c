@@ -1003,7 +1003,7 @@ static void *thread_list_during_churn(void *arg)
     return NULL;
 }
 
-/* C02: mixed r/w + open/close and directory storms */
+/* C02: mixed r/w + open/close stress */
 static int trace_C02(void)
 {
     trace_ok = 1;
@@ -1053,8 +1053,16 @@ static int trace_C02(void)
 
     unmount_and_check(CONC_DISK_C02_STORM);
     unlink(CONC_DISK_C02_STORM);
+    return trace_ok;
+}
 
-    /* Part 3: directory churn while another thread lists */
+/* Stress-only: directory churn while another thread lists.
+   This is intentionally diagnostic rather than part of the 22-point score:
+   the workload is useful for shaking out unstable locking, but it is more
+   schedule-sensitive than the official-style C correctness signal. */
+static int trace_stress_dir_churn(void)
+{
+    trace_ok = 1;
     sfs_format(CONC_DISK_C02_DIR, disk_size());
     atomic_store_explicit(&dir_churn_start, 0, memory_order_release);
     atomic_store_explicit(&dir_churn_done, 0, memory_order_release);
@@ -1070,7 +1078,7 @@ static int trace_C02(void)
     }
     atomic_store_explicit(&dir_churn_start, 1, memory_order_release);
 
-    ok = 1;
+    int ok = 1;
     for (int i = 0; i < NUM_THREADS; i++)
     {
         void *ret;
@@ -1086,8 +1094,9 @@ static int trace_C02(void)
         ok = 0;
     CHECK(ok, "concurrent directory churn failed");
 
-    cookie = NULL;
-    count = 0;
+    sfs_list_cookie cookie = NULL;
+    char name[SFS_FILE_NAME_SIZE_LIMIT];
+    int count = 0;
     int status;
     while ((status = sfs_list(&cookie, name, sizeof name)) == 0)
         count++;
@@ -1736,6 +1745,7 @@ int main(int argc, char *argv[])
     int mode_perf_only = 0;
     int mode_smoke_only = 0;
     int mode_concurrency_only = 0;
+    int mode_stress_only = 0;
     int mode_list_traces = 0;
     int mode_json = 0;
     for (int i = 1; i < argc; i++)
@@ -1752,6 +1762,8 @@ int main(int argc, char *argv[])
             mode_smoke_only = 1;
         else if (strcmp(argv[i], "--concurrency-only") == 0)
             mode_concurrency_only = 1;
+        else if (strcmp(argv[i], "--stress-only") == 0)
+            mode_stress_only = 1;
         else if (strcmp(argv[i], "--list-traces") == 0)
             mode_list_traces = 1;
         else if (strcmp(argv[i], "--json") == 0)
@@ -1807,6 +1819,10 @@ int main(int argc, char *argv[])
         {"C02", "rw_mix_storm", trace_C02},
     };
 
+    struct trace_entry stress_traces[] = {
+        {"S00", "dir_churn", trace_stress_dir_churn},
+    };
+
     if (mode_list_traces)
     {
         printf("category\tid\tname\tpoints\n");
@@ -1850,18 +1866,28 @@ int main(int argc, char *argv[])
         return (c == 3) ? 0 : 1;
     }
 
+    if (mode_stress_only)
+    {
+        int stress = run_category("Stress Diagnostics", stress_traces, 1);
+        unlink(DISK_NAME);
+        cleanup_concurrency_disks();
+        return (stress == 1) ? 0 : 1;
+    }
+
     int a = run_category("A (Feature Tests)", cat_a, 5);
     int b = run_category("B (Sequential Correctness)", cat_b, 4);
     int c = run_category("C (Concurrent Correctness)", cat_c, 3);
 
-    /* TSan race detection: if races found, C score becomes 0 */
+    /* TSan race detection: if races found, C score becomes 0.  Run it only
+       after the normal correctness suite passes, so partially implemented
+       starters get stable trace feedback before sanitizer diagnostics. */
     enum tsan_result tsan = TSAN_SKIPPED;
-    if (c == 3)
+    if (a == 5 && b == 4 && c == 3)
         tsan = run_tsan_check();
     else
     {
         printf("\nRace Detection (ThreadSanitizer):\n");
-        printf("  (skipped -- concurrent correctness traces must all pass first)\n");
+        printf("  (skipped -- normal correctness traces must all pass first)\n");
     }
     if (tsan == TSAN_RACE || tsan == TSAN_TRACE_FAILED ||
         tsan == TSAN_TIMEOUT)

@@ -39,5 +39,7 @@ not as assignment requirements.
 - Add more correctness traces before changing score weights.
 - Keep Lua trace coverage diagnostic until it matches the C autograder's
   concurrency signal.
+- Keep schedule-sensitive concurrency churn in stress-only diagnostics, not in
+  the main local score.
 - Prefer local reporting and reproducibility improvements over expanding the
   public SFS API.

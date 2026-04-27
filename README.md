@@ -102,9 +102,11 @@ right. The failure detail includes the first captured checker diagnostic.
 official-style Lua trace coverage. The local autograder remains the graded
 22-point score; trace coverage is diagnostic.
 
-`make stress` repeats the C concurrency traces. It is an implementation
-stability tool, not a starter health check; the unmodified skeleton may fail it
-because its concurrency path is intentionally not fixed yet.
+`make stress` repeats the C concurrency traces and then runs extra diagnostic
+stress checks that are intentionally outside the 22-point score. It is an
+implementation stability tool, not a starter health check; the unmodified
+skeleton may fail it because its concurrency path is intentionally not fixed
+yet.
 
 `make trace-smoke` builds the local Lua runner and executes the manifest's
 starter-safe Lua traces. `make trace-run` executes the full Lua-style trace

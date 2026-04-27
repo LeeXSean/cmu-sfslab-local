@@ -40,9 +40,9 @@ being runnable without CMU infrastructure.
   an official score prediction.
 - `make smoke`, `make grade`, and `make trace-check` are convenience targets
   for local validation.
-- `make stress` repeats the C concurrency traces to expose nondeterministic
-  failures after you have an implementation to test; it is not a starter health
-  check.
+- `make stress` repeats the C concurrency traces and extra stress-only
+  diagnostics to expose nondeterministic failures after you have an
+  implementation to test; it is not a starter health check.
 - `make baseline` writes `.perf_baseline` so performance is scored against the
   current machine instead of CMU's Autolab hardware.
 - ThreadSanitizer is used locally as the race detector when available.
