@@ -19,10 +19,10 @@ all: $(PROGRAMS)
 sfs-fsck: sfs-fsck.o
 	$(CC) $(LDFLAGS) -o $@ $^
 
-test-sfs: local/test-sfs.o sfs-disk.o sfs-support.o
+test-sfs: local/test-sfs.o local/test-report.o sfs-disk.o sfs-support.o
 	$(CC) $(LDFLAGS) -o $@ $^
 
-test-sfs-baseline: local/test-sfs.o local/sfs-baseline-ref.o sfs-support.o
+test-sfs-baseline: local/test-sfs.o local/test-report.o local/sfs-baseline-ref.o sfs-support.o
 	$(CC) $(LDFLAGS) -o $@ $^
 
 # Baseline calibration: run the benchmark BASELINE_RUNS times and write
@@ -95,8 +95,12 @@ stress: test-sfs sfs-fsck
 	done
 .PHONY: stress
 
-check: handout-check starter-check trace-check manifest-check smoke
+check: starter-check trace-check manifest-check smoke
 .PHONY: check
+
+dist-check: handout-check starter-check trace-check manifest-check
+	@$(MAKE) clean >/dev/null
+.PHONY: dist-check
 
 trace-check:
 	@sh local/check-traces.sh
@@ -142,5 +146,6 @@ clean:
 sfs-support.o: sfs-support.c sfs-disk.h
 sfs-disk.o: sfs-disk.c sfs-api.h sfs-disk.h
 sfs-fsck.o: sfs-fsck.c sfs-disk.h
-local/test-sfs.o: local/test-sfs.c sfs-api.h
+local/test-sfs.o: local/test-sfs.c local/test-report.h sfs-api.h
+local/test-report.o: local/test-report.c local/test-report.h
 local/sfs-baseline-ref.o: local/sfs-baseline-ref.c sfs-api.h sfs-disk.h

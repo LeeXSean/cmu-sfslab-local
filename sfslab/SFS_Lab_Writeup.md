@@ -392,7 +392,8 @@ If you want to run TSan manually for more detailed output:
 
 ```bash
 gcc -std=c11 -g -fsanitize=thread -pthread -D_GNU_SOURCE=1 \
-    -I. -o test-sfs-tsan local/test-sfs.c sfs-disk.c sfs-support.c
+    -I. -o test-sfs-tsan local/test-sfs.c local/test-report.c \
+    sfs-disk.c sfs-support.c
 ./test-sfs-tsan --tsan-only
 ```
 

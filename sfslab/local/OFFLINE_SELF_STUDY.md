@@ -29,8 +29,9 @@ being runnable without CMU infrastructure.
   API.
 - `make trace-json` reports the Lua trace catalog as separate diagnostic
   coverage, not as part of the local 22-point score.
-- `make report-json` combines the local score and Lua trace coverage into one
-  machine-readable report.
+- `make report-json` combines the local score, Lua trace coverage, and stress
+  diagnostics into one machine-readable report. Only the local autograder
+  section is the graded 22-point score.
 - `local/DEV_NOTES.md` records maintainer-only decisions that should not become
   accidental student requirements.
 - The repository root `Dockerfile` provides a Linux toolchain for builds,
@@ -39,7 +40,8 @@ being runnable without CMU infrastructure.
 - `local/SCORING.md` explains why the local score is a self-study signal, not
   an official score prediction.
 - `make smoke`, `make grade`, and `make trace-check` are convenience targets
-  for local validation.
+  for local validation. `make check` is the normal development health check;
+  `make dist-check` is the stricter package cleanliness check.
 - `make stress` repeats the C concurrency traces and extra stress-only
   diagnostics to expose nondeterministic failures after you have an
   implementation to test; it is not a starter health check.

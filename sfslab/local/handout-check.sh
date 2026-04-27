@@ -12,6 +12,8 @@ for path in \
     sfs-fsck.c \
     sfs-support.c \
     local/test-sfs.c \
+    local/test-report.c \
+    local/test-report.h \
     local/sfs-baseline-ref.c \
     local/build-lua-runner.sh \
     local/lua-sfs-runner.c \

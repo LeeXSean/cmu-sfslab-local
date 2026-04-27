@@ -13,6 +13,7 @@
  */
 
 #include "sfs-api.h"
+#include "test-report.h"
 
 #include <errno.h>
 #include <fcntl.h>
@@ -1367,43 +1368,6 @@ static int run_perf_benchmark(void)
 /*  ThreadSanitizer race detection (auto-compiled and run)             */
 /* ================================================================== */
 
-enum tsan_result
-{
-    TSAN_SKIPPED,
-    TSAN_CLEAN,
-    TSAN_RACE,
-    TSAN_TRACE_FAILED,
-    TSAN_UNAVAILABLE,
-    TSAN_TIMEOUT,
-};
-
-static const char *tsan_result_name(enum tsan_result result)
-{
-    switch (result)
-    {
-    case TSAN_SKIPPED: return "skipped";
-    case TSAN_CLEAN: return "clean";
-    case TSAN_RACE: return "race_detected";
-    case TSAN_TRACE_FAILED: return "trace_failed";
-    case TSAN_UNAVAILABLE: return "unavailable";
-    case TSAN_TIMEOUT: return "timeout";
-    }
-    return "unknown";
-}
-
-static int tsan_result_ran(enum tsan_result result)
-{
-    return result == TSAN_CLEAN || result == TSAN_RACE ||
-           result == TSAN_TRACE_FAILED || result == TSAN_TIMEOUT;
-}
-
-static const char *tsan_clean_json(enum tsan_result result)
-{
-    if (result == TSAN_CLEAN) return "true";
-    if (tsan_result_ran(result)) return "false";
-    return "null";
-}
-
 static enum tsan_result run_tsan_check(void)
 {
     printf("\nRace Detection (ThreadSanitizer):\n");
@@ -1414,7 +1378,8 @@ static enum tsan_result run_tsan_check(void)
     char compile_cmd[512];
     snprintf(compile_cmd, sizeof compile_cmd,
              "gcc -std=c11 -g -fsanitize=thread -pthread -D_GNU_SOURCE=1 "
-             "-I. -o %s local/test-sfs.c sfs-disk.c sfs-support.c 2>&1",
+             "-I. -o %s local/test-sfs.c local/test-report.c "
+             "sfs-disk.c sfs-support.c 2>&1",
              tsan_bin);
 
     int rc = system(compile_cmd);
@@ -1661,8 +1626,10 @@ static int run_trace_with_timeout(const char *id, trace_fn fn,
 static int run_category(const char *label, struct trace_entry *traces, int n)
 {
     printf("\nCategory %s:\n", label);
-    /* Only concurrent-correctness traces need the fork+timeout wrapper. */
-    int use_timeout = (label[0] == 'C');
+    /* Concurrent and stress diagnostics run in a forked child so deadlocks,
+       aborts, and heap corruption in the student's implementation do not take
+       down the autograder/reporting process. */
+    int use_timeout = (label[0] == 'C' || strncmp(label, "Stress", 6) == 0);
     int passed = 0;
     for (int i = 0; i < n; i++)
     {
@@ -1863,6 +1830,11 @@ int main(int argc, char *argv[])
         int c = run_category("C (Concurrent Correctness)", cat_c, 3);
         unlink(DISK_NAME);
         cleanup_concurrency_disks();
+        if (mode_json)
+        {
+            restore_stdout(saved_stdout);
+            test_report_print_trace_set_json("concurrency", c, 3, 1);
+        }
         return (c == 3) ? 0 : 1;
     }
 
@@ -1871,6 +1843,12 @@ int main(int argc, char *argv[])
         int stress = run_category("Stress Diagnostics", stress_traces, 1);
         unlink(DISK_NAME);
         cleanup_concurrency_disks();
+        if (mode_json)
+        {
+            restore_stdout(saved_stdout);
+            test_report_print_trace_set_json("stress_diagnostics", stress, 1,
+                                             0);
+        }
         return (stress == 1) ? 0 : 1;
     }
 
@@ -1978,22 +1956,7 @@ int main(int argc, char *argv[])
     if (mode_json)
     {
         restore_stdout(saved_stdout);
-        printf("{\n");
-        printf("  \"correctness\": {\"score\": %d, \"max\": 12},\n",
-               correctness);
-        printf("  \"categories\": {\n");
-        printf("    \"A\": {\"score\": %d, \"max\": 5},\n", a);
-        printf("    \"B\": {\"score\": %d, \"max\": 4},\n", b);
-        printf("    \"C\": {\"score\": %d, \"max\": 3, \"tsan_ran\": %s, \"tsan_clean\": %s, \"tsan_status\": \"%s\"}\n",
-               c, tsan_result_ran(tsan) ? "true" : "false",
-               tsan_clean_json(tsan), tsan_result_name(tsan));
-        printf("  },\n");
-        printf("  \"performance\": {\"score\": %d, \"max\": 10, \"ran\": %s},\n",
-               perf, perf_ran ? "true" : "false");
-        printf("  \"total\": {\"score\": %d, \"max\": 22},\n", total);
-        printf("  \"style\": {\"max\": 4, \"manual\": true},\n");
-        printf("  \"passed\": %s\n", correctness == 12 ? "true" : "false");
-        printf("}\n");
+        test_report_print_score_json(a, b, c, tsan, perf, perf_ran);
     }
     return (correctness == 12) ? 0 : 1;
 }

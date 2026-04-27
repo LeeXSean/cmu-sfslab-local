@@ -67,7 +67,13 @@ Useful make targets:
         development dependencies are missing.
 
     make check
-        Run smoke, trace-check, handout-check, and starter-check.
+        Run the normal development health checks: starter-check, trace-check,
+        manifest-check, and smoke. This target may be run after build or score
+        commands have left generated files behind.
+
+    make dist-check
+        Run the stricter package checks, including handout-check. This target
+        expects no generated build artifacts to be present.
 
     make trace-check
         Syntax-check Lua-style traces when `luac` is installed.

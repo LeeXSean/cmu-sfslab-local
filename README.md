@@ -67,6 +67,7 @@ make trace-smoke
 make trace-run
 make trace-json
 make docker-check
+make docker-dist-check
 make docker-starter-safe
 make docker-stress
 make docker-report-json
@@ -77,14 +78,19 @@ make trace-list
 make manifest-check
 make handout-check
 make starter-check
+make dist-check
 make dist
 ```
 
 GitHub Actions runs the same smoke and trace syntax checks on pushes and pull
 requests.
 
-`make dist` runs the handout, starter, and manifest checks first, then uses
-reproducible GNU tar flags when they are available.
+`make check` is the development health check and can be run after normal build
+or grading targets. `make dist-check` is the stricter package check: it includes
+`handout-check`, so it expects no generated build artifacts to be present.
+
+`make dist` runs `make clean`, `make dist-check`, and another `make clean`,
+then uses reproducible GNU tar flags when they are available.
 
 `make starter-safe` is the starter health check: it runs the C smoke traces and
 then runs the manifest's starter-safe Lua traces. From the repository root, Lua
@@ -98,9 +104,9 @@ Correctness traces also run `sfs-fsck` after unmounting their disk images, so
 metadata corruption can fail a trace even when the last read/write result looked
 right. The failure detail includes the first captured checker diagnostic.
 
-`make report-json` combines the local autograder JSON with the separate
-official-style Lua trace coverage. The local autograder remains the graded
-22-point score; trace coverage is diagnostic.
+`make report-json` combines the local autograder JSON with separate
+official-style Lua trace coverage and stress diagnostics. The local autograder
+remains the graded 22-point score; Lua and stress sections are diagnostic.
 
 `make stress` repeats the C concurrency traces and then runs extra diagnostic
 stress checks that are intentionally outside the 22-point score. It is an
@@ -137,6 +143,7 @@ The root Makefile wraps the same container flow:
 
 ```bash
 make docker-check
+make docker-dist-check
 make docker-starter-safe
 make docker-stress
 make docker-report-json

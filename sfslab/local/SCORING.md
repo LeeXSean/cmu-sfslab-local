@@ -25,7 +25,10 @@ reported separately and is not added to the 22-point local score.
 From the repository root, `make trace-run`, `make trace-smoke`, and
 `make trace-json` fall back to Docker when local Lua development dependencies
 are missing.
-Run `make report-json` to print both reports in one JSON document.
+Run `make report-json` to print the local score, Lua trace coverage, and stress
+diagnostics in one JSON document. Only `local_autograder.result.total` is the
+graded 22-point score; Lua trace coverage and stress diagnostics are separate
+signals.
 Run `make starter-safe` to check that the packaged starter and starter-safe
 trace subset still run. This is the package health check; it is not a score.
 Run `make stress` to repeat the C concurrency traces and extra stress-only

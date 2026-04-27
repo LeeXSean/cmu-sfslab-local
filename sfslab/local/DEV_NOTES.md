@@ -41,5 +41,7 @@ not as assignment requirements.
   concurrency signal.
 - Keep schedule-sensitive concurrency churn in stress-only diagnostics, not in
   the main local score.
+- Keep report formatting in `test-report.c` so `test-sfs.c` stays focused on
+  trace behavior.
 - Prefer local reporting and reproducibility improvements over expanding the
   public SFS API.

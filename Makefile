@@ -43,6 +43,10 @@ stress:
 check:
 	$(MAKE) -C $(HANDOUT) check
 
+.PHONY: dist-check
+dist-check:
+	$(MAKE) -C $(HANDOUT) dist-check
+
 .PHONY: trace-check
 trace-check:
 	$(MAKE) -C $(HANDOUT) trace-check
@@ -86,9 +90,7 @@ clean:
 .PHONY: dist
 dist:
 	$(MAKE) -C $(HANDOUT) clean
-	$(MAKE) -C $(HANDOUT) handout-check
-	$(MAKE) -C $(HANDOUT) starter-check
-	$(MAKE) -C $(HANDOUT) manifest-check
+	$(MAKE) -C $(HANDOUT) dist-check
 	$(MAKE) -C $(HANDOUT) clean
 	@if tar --version 2>/dev/null | grep -qi 'gnu tar'; then \
 	  tar --sort=name --mtime='$(DIST_MTIME)' \
@@ -108,6 +110,10 @@ docker-shell: docker-image
 .PHONY: docker-check
 docker-check: docker-image
 	$(DOCKER_RUN) sh -c 'make clean && make check'
+
+.PHONY: docker-dist-check
+docker-dist-check: docker-image
+	$(DOCKER_RUN) sh -c 'make clean && make dist-check'
 
 .PHONY: docker-starter-safe
 docker-starter-safe: docker-image
