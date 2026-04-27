@@ -98,7 +98,9 @@ stress: test-sfs sfs-fsck
 check: starter-check trace-check manifest-check smoke
 .PHONY: check
 
-dist-check: handout-check starter-check trace-check manifest-check
+dist-check:
+	@$(MAKE) clean >/dev/null
+	@$(MAKE) handout-check starter-check trace-check manifest-check
 	@$(MAKE) clean >/dev/null
 .PHONY: dist-check
 

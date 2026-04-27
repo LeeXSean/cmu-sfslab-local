@@ -46,8 +46,11 @@ trace's cleanup path does not contaminate the next trace.
 ## How To Read The Score
 
 Prioritize correctness first. A fast implementation with failing A/B/C traces
-is not useful. ThreadSanitizer runs after all normal A/B/C correctness traces
-pass; the JSON report records `tsan_status` as `clean`, `race_detected`,
+is not useful. The normal C traces are kept as a stable functional signal:
+individual SFS API calls are serialized by the test harness so an unfinished
+starter does not receive schedule-dependent scores. ThreadSanitizer runs after
+all normal A/B/C correctness traces pass with that serialization disabled; the
+JSON report records `tsan_status` as `clean`, `race_detected`,
 `trace_failed`, `timeout`, `skipped`, or `unavailable`. A TSan race, TSan trace
 failure, or TSan timeout sets the C score to zero. If a normal correctness
 trace already fails, TSan is skipped and the normal per-trace score is

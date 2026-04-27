@@ -313,11 +313,14 @@ effect there.)
 
 **Note on Category C:** After the normal A/B/C correctness traces all pass, the
 autograder automatically compiles a ThreadSanitizer build and re-runs the concurrent
-tests. If TSan detects any data races, the Category C score is set to 0 -- even if the
-normal traces appeared to pass. This mirrors the original CMU ConTech-based race
-detection. If a normal correctness trace already fails, TSan is skipped and the normal
-per-trace score is reported. If your system does not support `-fsanitize=thread`, the
-TSan check is skipped without penalty.
+tests. The normal C traces serialize individual SFS API calls so partially
+completed starters get stable functional feedback; the TSan rerun disables that
+guard and makes real concurrent calls. If TSan detects any data races, the
+Category C score is set to 0 -- even if the normal traces appeared to pass. This
+mirrors the original CMU ConTech-based race detection. If a normal correctness
+trace already fails, TSan is skipped and the normal per-trace score is reported.
+If your system does not support `-fsanitize=thread`, the TSan check is skipped
+without penalty.
 
 The performance benchmark uses 8 threads each doing 100 open/write/seek/read/close
 cycles. The benchmark is **sampled 5 times and the median ops/sec is scored**,

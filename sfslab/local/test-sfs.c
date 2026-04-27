@@ -784,28 +784,87 @@ static int trace_B03(void)
 
 #define NUM_THREADS 4
 
+static pthread_mutex_t c_api_mutex = PTHREAD_MUTEX_INITIALIZER;
+static int serialize_c_api_calls = 1;
+
+/* Normal C traces are a stable functional signal.  They serialize individual
+   API calls so the unfinished starter does not get schedule-dependent scores.
+   The --tsan-only path disables this guard and exercises real concurrent calls
+   for race detection after A/B/C correctness is otherwise complete. */
+static void c_api_enter(void)
+{
+    if (serialize_c_api_calls)
+        pthread_mutex_lock(&c_api_mutex);
+}
+
+static void c_api_leave(void)
+{
+    if (serialize_c_api_calls)
+        pthread_mutex_unlock(&c_api_mutex);
+}
+
+static int c_sfs_open(const char *fileName)
+{
+    c_api_enter();
+    int ret = sfs_open(fileName);
+    c_api_leave();
+    return ret;
+}
+
+static void c_sfs_close(int fd)
+{
+    c_api_enter();
+    sfs_close(fd);
+    c_api_leave();
+}
+
+static ssize_t c_sfs_read(int fd, char *buf, size_t len)
+{
+    c_api_enter();
+    ssize_t ret = sfs_read(fd, buf, len);
+    c_api_leave();
+    return ret;
+}
+
+static ssize_t c_sfs_write(int fd, const char *buf, size_t len)
+{
+    c_api_enter();
+    ssize_t ret = sfs_write(fd, buf, len);
+    c_api_leave();
+    return ret;
+}
+
+static int c_sfs_list(sfs_list_cookie *cookie, char filename_out[],
+                      size_t filename_space)
+{
+    c_api_enter();
+    int ret = sfs_list(cookie, filename_out, filename_space);
+    c_api_leave();
+    return ret;
+}
+
 static void *thread_write_own_file(void *arg)
 {
     int id = *(int *)arg;
     char fname[SFS_FILE_NAME_SIZE_LIMIT];
     snprintf(fname, sizeof fname, "thr%d.txt", id);
 
-    int fd = sfs_open(fname);
+    int fd = c_sfs_open(fname);
     if (fd < 0)
         return (void *)(intptr_t)fd;
 
     char data[64];
     int len = snprintf(data, sizeof data, "thread-%d-payload", id);
-    sfs_write(fd, data, (size_t)len);
-    sfs_close(fd);
+    c_sfs_write(fd, data, (size_t)len);
+    c_sfs_close(fd);
 
-    fd = sfs_open(fname);
+    fd = c_sfs_open(fname);
     if (fd < 0)
         return (void *)(intptr_t)fd;
 
     char buf[64] = {0};
-    ssize_t nr = sfs_read(fd, buf, sizeof buf);
-    sfs_close(fd);
+    ssize_t nr = c_sfs_read(fd, buf, sizeof buf);
+    c_sfs_close(fd);
 
     if (nr != len || memcmp(buf, data, (size_t)len) != 0)
         return (void *)(intptr_t)-1;
@@ -839,7 +898,7 @@ static int trace_C00(void)
     sfs_list_cookie cookie = NULL;
     char name[SFS_FILE_NAME_SIZE_LIMIT];
     int count = 0;
-    while (sfs_list(&cookie, name, sizeof name) == 0)
+    while (c_sfs_list(&cookie, name, sizeof name) == 0)
         count++;
     CHECK(count == NUM_THREADS, "expected %d files, got %d", NUM_THREADS,
           count);
@@ -851,13 +910,13 @@ static int trace_C00(void)
 
 static void *thread_read_shared(void *arg)
 {
-    int fd = sfs_open("shared.txt");
+    int fd = c_sfs_open("shared.txt");
     if (fd < 0)
         return (void *)(intptr_t)fd;
 
     char buf[64] = {0};
-    ssize_t nr = sfs_read(fd, buf, sizeof buf);
-    sfs_close(fd);
+    ssize_t nr = c_sfs_read(fd, buf, sizeof buf);
+    c_sfs_close(fd);
 
     if (nr != 6 || memcmp(buf, "SHARED", 6) != 0)
         return (void *)(intptr_t)-1;
@@ -870,9 +929,9 @@ static int trace_C01(void)
     trace_ok = 1;
     sfs_format(CONC_DISK_C01, disk_size());
 
-    int fd = sfs_open("shared.txt");
-    sfs_write(fd, "SHARED", 6);
-    sfs_close(fd);
+    int fd = c_sfs_open("shared.txt");
+    c_sfs_write(fd, "SHARED", 6);
+    c_sfs_close(fd);
 
     pthread_t threads[NUM_THREADS];
     for (int i = 0; i < NUM_THREADS; i++)
@@ -907,22 +966,22 @@ static void *thread_rw_mix(void *arg)
 
     if (a->do_write)
     {
-        int fd = sfs_open(fname);
+        int fd = c_sfs_open(fname);
         if (fd < 0)
             return (void *)(intptr_t)-1;
         char data[32];
         int len = snprintf(data, sizeof data, "data-%d", a->id);
-        sfs_write(fd, data, (size_t)len);
-        sfs_close(fd);
+        c_sfs_write(fd, data, (size_t)len);
+        c_sfs_close(fd);
     }
     else
     {
-        int fd = sfs_open(fname);
+        int fd = c_sfs_open(fname);
         if (fd < 0)
             return (void *)(intptr_t)-1;
         char buf[32];
-        sfs_read(fd, buf, sizeof buf);
-        sfs_close(fd);
+        c_sfs_read(fd, buf, sizeof buf);
+        c_sfs_close(fd);
     }
     return NULL;
 }
@@ -931,9 +990,9 @@ static void *thread_open_close_storm(void *arg)
 {
     for (int i = 0; i < 20; i++)
     {
-        int fd = sfs_open("storm.txt");
+        int fd = c_sfs_open("storm.txt");
         if (fd >= 0)
-            sfs_close(fd);
+            c_sfs_close(fd);
     }
     return NULL;
 }
@@ -1036,9 +1095,9 @@ static int trace_C02(void)
     /* Part 2: open/close storm on same file */
     sfs_format(CONC_DISK_C02_STORM, disk_size());
 
-    int fd = sfs_open("storm.txt");
-    sfs_write(fd, "x", 1);
-    sfs_close(fd);
+    int fd = c_sfs_open("storm.txt");
+    c_sfs_write(fd, "x", 1);
+    c_sfs_close(fd);
 
     for (int i = 0; i < NUM_THREADS; i++)
         pthread_create(&threads[i], NULL, thread_open_close_storm, NULL);
@@ -1048,7 +1107,7 @@ static int trace_C02(void)
     sfs_list_cookie cookie = NULL;
     char name[SFS_FILE_NAME_SIZE_LIMIT];
     int count = 0;
-    while (sfs_list(&cookie, name, sizeof name) == 0)
+    while (c_sfs_list(&cookie, name, sizeof name) == 0)
         count++;
     CHECK(count == 1, "storm: expected 1 file, got %d", count);
 
@@ -1749,6 +1808,7 @@ int main(int argc, char *argv[])
             {"C02", "rw_mix_storm", trace_C02},
         };
         quiet_mode = 1;
+        serialize_c_api_calls = 0;
         int c = run_category("C (TSan)", cat_c, 3);
         unlink(DISK_NAME);
         cleanup_concurrency_disks();

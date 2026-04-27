@@ -23,7 +23,8 @@ test tools are here to show progress, not to replace the assignment.
 
 5. Move to Category C after A and B are stable.
    Category C is the normal concurrent correctness signal. It is part of the
-   22-point local score.
+   22-point local score. Race detection and repeated stress are separate
+   follow-up signals; see `local/SCORING.md`.
 
 6. Use `make stress` only as a diagnostic.
    Stress checks are intentionally outside the 22-point score. They are useful
