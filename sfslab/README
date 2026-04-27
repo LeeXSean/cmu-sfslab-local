@@ -29,7 +29,7 @@ Provided support files:
 
     traces/
         Lua-style trace catalog. These files document the intended A/B/C test
-        shape but are not executed by the current local grader.
+        shape and can be executed by the local Lua runner.
 
 Offline-only local tools:
 
@@ -73,9 +73,10 @@ Useful make targets:
         Syntax-check Lua-style traces when `luac` is installed.
 
     make trace-run
-        Build the local Lua runner and execute the Lua-style traces. From the
-        repository root, this falls back to Docker when local Lua development
-        dependencies are missing.
+        Build the local Lua runner and execute the Lua-style traces. The local
+        runner uses pthread-backed lanes for true concurrent C traces. From
+        the repository root, this falls back to Docker when local Lua
+        development dependencies are missing.
 
     make trace-smoke
         Execute only the Lua traces that should pass on the starter.

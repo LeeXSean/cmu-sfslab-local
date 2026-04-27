@@ -49,7 +49,7 @@ make test         # run the local autograder
 make json         # print the local autograder score as JSON
 make grade        # recalibrate baseline, then run the autograder
 make smoke        # verify the starter traces run cleanly
-make starter-safe # run starter-safe C checks and optional Lua traces
+make starter-safe # run starter-safe C checks and Lua traces
 make trace-check  # syntax-check Lua-style traces when luac is installed
 ```
 
@@ -87,9 +87,9 @@ requests.
 reproducible GNU tar flags when they are available.
 
 `make starter-safe` is the starter health check: it runs the C smoke traces and
-then runs the manifest's starter-safe Lua traces when the local Lua development
-dependencies are available. Missing Lua dependencies are reported as a skip, not
-as a starter failure.
+then runs the manifest's starter-safe Lua traces. From the repository root, Lua
+trace targets fall back to Docker when local Lua development dependencies are
+missing.
 
 `make json` exits nonzero when correctness fails, just like `make test`; the
 JSON is still written to stdout.
@@ -107,11 +107,12 @@ stability tool, not a starter health check; the unmodified skeleton may fail it
 because its concurrency path is intentionally not fixed yet.
 
 `make trace-smoke` builds the local Lua runner and executes the manifest's
-starter-safe Lua traces. `make trace-run` executes the full Lua-style trace catalog and is
-expected to fail on the unmodified skeleton. Both need `pkg-config` and Lua
-development headers. `make trace-json` prints the same official-style trace
-coverage as JSON; it is diagnostic and does not change the local 22-point
-autograder score.
+starter-safe Lua traces. `make trace-run` executes the full Lua-style trace
+catalog and is expected to fail on the unmodified skeleton. The runner provides
+a pthread-backed `lanes.gen` compatibility layer, so Lua C traces exercise real
+concurrent calls into the SFS API. `make trace-json` prints the same
+official-style trace coverage as JSON; it is diagnostic and does not change the
+local 22-point autograder score.
 
 On Debian or Ubuntu, install those trace-runner dependencies with:
 

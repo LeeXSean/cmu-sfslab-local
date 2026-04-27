@@ -106,6 +106,8 @@ make starter-safe
 
 From the repository root, the Lua trace targets use the local Lua development
 packages when available and fall back to Docker when those packages are missing.
+The local Lua runner implements `lanes.gen` with pthreads and separate Lua
+states, so Lua C traces make real concurrent calls into the SFS API.
 
 You can also check a disk image for structural consistency:
 

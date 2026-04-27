@@ -24,9 +24,9 @@ being runnable without CMU infrastructure.
   back to Docker when local Lua development dependencies are missing.
 - `make trace-smoke` executes the starter-safe Lua traces. `make trace-run`
   executes the full Lua-style catalog and is expected to fail on the
-  unmodified skeleton. The local binding includes a synchronous fallback for
-  `lanes.gen`; the C autograder remains the source of real concurrent stress
-  testing.
+  unmodified skeleton. The local binding implements `lanes.gen` with pthreads
+  and separate Lua states, so C traces make real concurrent calls into the SFS
+  API.
 - `make trace-json` reports the Lua trace catalog as separate diagnostic
   coverage, not as part of the local 22-point score.
 - `make report-json` combines the local score and Lua trace coverage into one

@@ -16,9 +16,10 @@ an executable companion to the C autograder.
   purpose.
 
 The helper names used below (`disk.open`, `disk.write`, `check`, `lanes.gen`,
-etc.) follow the course-style trace vocabulary. The local binding provides a
-synchronous fallback for `lanes.gen`; use the C autograder and ThreadSanitizer
-for real concurrent stress testing.
+etc.) follow the course-style trace vocabulary. The local binding implements
+`lanes.gen` with pthreads and separate Lua states, so C traces make real
+concurrent calls into the SFS API. The C autograder and ThreadSanitizer remain
+the scored concurrency signal.
 
 Run `make trace-check` from the handout root to syntax-check these files when
 `luac` is installed. Run `make trace-smoke` to check the starter-safe traces,
