@@ -72,8 +72,8 @@ Useful make targets:
         commands have left generated files behind.
 
     make dist-check
-        Run the stricter package checks, including handout-check. This target
-        expects no generated build artifacts to be present.
+        Clean generated build artifacts, then run the stricter package checks,
+        including handout-check.
 
     make trace-check
         Syntax-check Lua-style traces when `luac` is installed.
@@ -99,8 +99,7 @@ Useful make targets:
     make starter-check
         Check that the packaged starter has not grown solution code.
 
-Read GETTING_STARTED.md for the recommended local workflow, SFS_Lab_Writeup.md
-for the lab narrative, and
-local/OFFLINE_SELF_STUDY.md for the differences between this offline package
-and the course infrastructure. Read local/SCORING.md before treating a local
-score as meaningful.
+Read GETTING_STARTED.md for the recommended local workflow, SCORING.md before
+treating a local score as meaningful, SFS_Lab_Writeup.md for the lab narrative,
+and local/OFFLINE_SELF_STUDY.md for the differences between this offline
+package and the course infrastructure.

@@ -17,8 +17,8 @@ being runnable without CMU infrastructure.
   runner.
 - `local/sfs-baseline-ref.c` is a coarse-lock reference used only for local
   performance calibration.
-- `traces/` contains Lua-style trace fixtures for documentation and future
-  runner work.
+- `traces/` contains Lua-style trace fixtures for documentation and local
+  execution.
 - `make starter-safe` is the starter health check: it runs the C smoke traces
   and the starter-safe Lua traces. From the repository root, Lua traces fall
   back to Docker when local Lua development dependencies are missing.
@@ -35,7 +35,7 @@ being runnable without CMU infrastructure.
 - The repository root `Dockerfile` provides a Linux toolchain for builds,
   ThreadSanitizer runs, and Lua trace execution. Root trace targets use it as
   a fallback when the host is missing Lua headers or `pkg-config`.
-- `local/SCORING.md` explains why the local score is a self-study signal, not
+- `SCORING.md` explains why the local score is a self-study signal, not
   an official score prediction.
 - `make smoke`, `make grade`, and `make trace-check` are convenience targets
   for local validation. `make check` is the normal development health check;

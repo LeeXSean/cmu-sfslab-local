@@ -54,7 +54,7 @@ Inside `sfslab/`:
 
 - `GETTING_STARTED.md` explains the recommended workflow.
 - `SFS_Lab_Writeup.md` is the lab narrative.
-- `local/SCORING.md` explains the local score.
+- `SCORING.md` explains the local score.
 - `local/OFFLINE_SELF_STUDY.md` explains local-only differences.
 - `traces/` contains executable Lua-style diagnostic traces.
 

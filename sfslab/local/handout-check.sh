@@ -22,7 +22,7 @@ for path in \
     local/run-lua-traces.sh \
     local/run-lua-with-fallback.sh \
     local/OFFLINE_SELF_STUDY.md \
-    local/SCORING.md \
+    SCORING.md \
     traces/README.md
 do
     if [ ! -e "$path" ]; then
