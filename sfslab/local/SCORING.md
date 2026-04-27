@@ -10,6 +10,10 @@ The local score is a self-study signal, not an Autolab prediction.
 - Performance: 10 points
 - Style: manual, up to 4 points
 
+The local 22-point score is intentionally frozen at these weights. New checks
+should be reported as Lua coverage or stress diagnostics unless the scoring
+contract is deliberately revised.
+
 Performance only runs after all correctness traces pass.
 
 Correctness traces also run `sfs-fsck` after unmounting their disk image. A

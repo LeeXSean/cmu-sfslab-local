@@ -37,6 +37,8 @@ not as assignment requirements.
 ## Core Next Work
 
 - Add more correctness traces before changing score weights.
+- Keep the local 22-point score contract frozen unless there is a deliberate
+  scoring revision; new checks should usually be diagnostics.
 - Keep Lua trace coverage diagnostic until it matches the C autograder's
   concurrency signal.
 - Use the trace manifest's starter metadata to keep smoke checks aligned with

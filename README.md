@@ -15,6 +15,7 @@ cmu-sfslab-local/
   docs/MAINTAINERS.md     # repo-only maintenance notes
   sfslab/                  # handout-style working directory
     README
+    GETTING_STARTED.md
     SFS_Lab_Writeup.md
     Makefile
     sfs-disk.c             # student file
@@ -41,6 +42,9 @@ make
 make baseline
 ./test-sfs
 ```
+
+Inside the handout, start with `GETTING_STARTED.md`; it gives the recommended
+order without adding extra grading requirements.
 
 Helpful targets inside `sfslab/`:
 

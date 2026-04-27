@@ -5,6 +5,7 @@ missing=0
 for path in \
     Makefile \
     README \
+    GETTING_STARTED.md \
     SFS_Lab_Writeup.md \
     sfs-api.h \
     sfs-disk.c \
