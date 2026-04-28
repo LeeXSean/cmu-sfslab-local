@@ -37,6 +37,7 @@ jobs:
         run: |
           make report-json > report.json
           python3 -m json.tool report.json > /dev/null
+          python3 docs/examples/compare-starter-report.py docs/examples/starter-report.json report.json
 
       - name: Build and verify dist tarball
         run: make dist-verify

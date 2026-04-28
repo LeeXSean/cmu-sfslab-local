@@ -11,3 +11,4 @@ sfs-fsck
 test-sfs-tsan
 .perf_baseline
 .perf_baseline.tmp
+.compare-starter-report.*/

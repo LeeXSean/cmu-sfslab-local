@@ -11,7 +11,8 @@ make lint-strict
 make clean
 make check
 make trace-smoke
-make report-json
+make report-json > /tmp/starter-report.json
+python3 docs/examples/compare-starter-report.py docs/examples/starter-report.json /tmp/starter-report.json
 make dist-verify
 make dist-repro-check
 ```
@@ -34,6 +35,8 @@ Expected starter status:
 - `make report-json` exits 0 because report generation worked.
 - The JSON score still reports the intentionally incomplete starter as not
   fully graded.
+- `docs/examples/compare-starter-report.py` accepts the starter report's
+  graded/core fields even when environment-dependent diagnostics differ.
 - `sfs_getpos`, `sfs_seek`, and `sfs_rename` remain `-ENOSYS` stubs.
 
 ## Version Tags
@@ -62,7 +65,8 @@ If a second release is needed on the same date, add a numeric suffix such as
 - `make lint-strict`
 - `make check`
 - `make trace-smoke`
-- `make report-json`
+- `make report-json > /tmp/starter-report.json`
+- `python3 docs/examples/compare-starter-report.py docs/examples/starter-report.json /tmp/starter-report.json`
 - `make dist-verify`
 - `make dist-repro-check`
 

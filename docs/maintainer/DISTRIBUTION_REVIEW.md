@@ -32,9 +32,12 @@ the handout tarball. It is not legal advice.
 
 - Run `make dist-verify`.
 - Run `make dist-repro-check`.
-- Compare the fresh starter report's graded/core fields with
-  `docs/examples/starter-report.json`: `local_autograder.result.total`,
-  A/B/C category scores, and `combined.graded_passed`.
+- Compare the fresh starter report's graded/core fields with the stored
+  example:
+  ```bash
+  make report-json > /tmp/starter-report.json
+  python3 docs/examples/compare-starter-report.py docs/examples/starter-report.json /tmp/starter-report.json
+  ```
 - Do not require diagnostic sections to match exactly. Lua trace availability
   changes depending on whether local Lua development packages are installed.
 

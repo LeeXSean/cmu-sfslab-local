@@ -4,7 +4,9 @@
 autograder score with diagnostic trace and stress sections.
 
 See `docs/examples/starter-report.json` for the expected packaged-starter
-report shape.
+report shape. Use `docs/examples/compare-starter-report.py` to compare only
+the starter's stable graded/core fields and ignore environment-dependent
+diagnostics.
 
 The command exits 0 when report generation succeeds, even if the starter or a
 student implementation fails graded traces. Use `make report-json-strict` when
