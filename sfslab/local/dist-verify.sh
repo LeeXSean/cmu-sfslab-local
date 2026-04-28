@@ -30,6 +30,30 @@ if grep -E '(^|/)\.git(/|$)|^\.github/|^docs/|sfslab-handout\.tar$' "$manifest" 
     exit 1
 fi
 
+bad_modes="$tmp/bad-modes.txt"
+tar -tvf "$tarball" | awk '
+{
+    mode = $1
+    path = $NF
+    if (mode ~ /^d/ && mode != "drwxr-xr-x") {
+        print mode, path
+    } else if (mode ~ /^-/) {
+        expected = "-rw-r--r--"
+        if (path ~ /^sfslab\/local\/[^/]+\.sh$/) {
+            expected = "-rwxr-xr-x"
+        }
+        if (mode != expected) {
+            print mode, path
+        }
+    }
+}
+' > "$bad_modes"
+if [ -s "$bad_modes" ]; then
+    echo "dist-verify: tarball has unexpected file modes" >&2
+    cat "$bad_modes" >&2
+    exit 1
+fi
+
 tar -xf "$tarball" -C "$tmp"
 
 if [ ! -f "$tmp/sfslab/Makefile" ]; then

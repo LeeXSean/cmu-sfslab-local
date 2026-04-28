@@ -122,11 +122,18 @@ dist:
 	$(MAKE) -C $(HANDOUT) clean
 	$(MAKE) -C $(HANDOUT) dist-check
 	$(MAKE) -C $(HANDOUT) clean
-	@if tar --version 2>/dev/null | grep -qi 'gnu tar'; then \
+	@tmp=$$(mktemp -d "$${TMPDIR:-/tmp}/sfslab-dist.XXXXXX"); \
+	trap 'rm -rf "$$tmp"' EXIT HUP INT TERM; \
+	mkdir "$$tmp/$(HANDOUT)"; \
+	cp -R "$(HANDOUT)/." "$$tmp/$(HANDOUT)/"; \
+	find "$$tmp/$(HANDOUT)" -type d -exec chmod 755 {} +; \
+	find "$$tmp/$(HANDOUT)" -type f -exec chmod 644 {} +; \
+	find "$$tmp/$(HANDOUT)/local" -type f -name '*.sh' -exec chmod 755 {} +; \
+	if tar --version 2>/dev/null | grep -qi 'gnu tar'; then \
 	  tar --sort=name --mtime='$(DIST_MTIME)' \
-	    --owner=0 --group=0 --numeric-owner -cf $(DIST) $(HANDOUT); \
+	    --owner=0 --group=0 --numeric-owner -C "$$tmp" -cf "$(DIST)" "$(HANDOUT)"; \
 	else \
-	  tar -cf $(DIST) $(HANDOUT); \
+	  tar -C "$$tmp" -cf "$(DIST)" "$(HANDOUT)"; \
 	fi
 
 .PHONY: docker-image
