@@ -17,7 +17,7 @@ cd sfslab
 make check
 ```
 
-Then read `GETTING_STARTED.md` and `SFS_Lab_Writeup.md` inside `sfslab/`.
+Then read `README` and `SFS_Lab_Writeup.md` inside `sfslab/`.
 
 ## Useful Commands
 
@@ -46,17 +46,17 @@ sudo apt-get install build-essential make shellcheck clang-format pkg-config lua
 cmu-sfslab-local/
   sfslab/                 # handout-style working directory
   sfslab-handout.tar      # packaged copy of sfslab/
-  docs/report-schema.md   # report-json field reference
-  docs/examples/          # sample machine-readable reports
-  docs/maintainer/        # release and repository maintenance notes
+  docs/report-schema.md       # report-json field reference
+  docs/offline-self-study.md  # local-only handout notes
+  docs/examples/              # sample machine-readable reports
+  docs/maintainer/            # release and repository maintenance notes
 ```
 
 Inside `sfslab/`, the main files are:
 
-- `GETTING_STARTED.md`: recommended self-study order.
+- `README`: recommended self-study order and common commands.
 - `SFS_Lab_Writeup.md`: lab narrative.
 - `SCORING.md`: local score explanation.
-- `local/OFFLINE_SELF_STUDY.md`: local-only differences.
 - `traces/`: executable Lua-style diagnostic traces.
 
 ## Starter Boundary

@@ -8,98 +8,37 @@ This directory contains the files needed to work through the SFS lab. It is
 arranged as a handout-style working directory: start here, edit `sfs-disk.c`,
 and use the provided tools to test your work.
 
-Student source file:
+Read SFS_Lab_Writeup.md for the lab narrative and API requirements. The file
+you edit is:
 
     sfs-disk.c
-        This is the file you modify while doing the lab.
 
 Provided support files:
 
-    sfs-api.h
-        API specification for sfs-disk.c.
+    sfs-api.h       API specification for sfs-disk.c.
+    sfs-disk.h      On-disk data structures and constants.
+    sfs-support.c   Low-level disk image and mmap support.
+    sfs-fsck.c      Filesystem consistency checker.
 
-    sfs-disk.h
-        On-disk data structures and constants.
+Suggested order:
 
-    sfs-support.c
-        Low-level disk image and mmap support.
-
-    sfs-fsck.c
-        Filesystem consistency checker.
-
-    traces/
-        Lua-style trace catalog. These files document the intended A/B/C test
-        shape and can be executed by the local Lua runner.
-
-Offline-only local tools:
-
-    local/test-sfs.c
-        Standalone local autograder.
-
-    local/sfs-baseline-ref.c
-        Coarse-lock reference implementation for performance calibration.
-
-    Makefile
-        Builds the local tools. Run `make`, then `make baseline`, then
-        `./test-sfs`.
+    1. Run `make check`.
+    2. Read the `sfs_getpos`, `sfs_seek`, and `sfs_rename` comments in
+       `sfs-api.h`.
+    3. Work through Category A, then B, then C.
+    4. Run `make baseline` before treating performance scores as meaningful.
+    5. Tune performance only after correctness reaches 12/12.
 
 Useful make targets:
 
-    make
-        Build the local checker binaries.
+    make check        Run starter and trace health checks.
+    make test         Run the local autograder.
+    make json         Print the local 22-point score as JSON.
+    make report-json  Print score plus diagnostic JSON.
+    make trace-smoke  Run Lua traces that should pass on the starter.
+    make grade        Recalibrate performance, then run the autograder.
+    make clean        Remove generated files.
 
-    make test
-        Run the local autograder.
-
-    make json
-        Print the local autograder score as JSON. Exits nonzero when
-        correctness fails.
-
-    make grade
-        Recalibrate the local performance baseline, then run the autograder.
-
-    make smoke
-        Build and run the two starter traces that should pass on the skeleton.
-
-    make starter-safe
-        Run the starter-safe C smoke checks and the starter-safe Lua traces.
-        From the repository root, Lua traces fall back to Docker when local Lua
-        development dependencies are missing.
-
-    make check
-        Run the normal development health checks: starter-check, trace-check,
-        manifest-check, and smoke. This target may be run after build or score
-        commands have left generated files behind.
-
-    make dist-check
-        Clean generated build artifacts, then run the stricter package checks,
-        including handout-check.
-
-    make trace-check
-        Syntax-check Lua-style traces when `luac` is installed.
-
-    make trace-run
-        Build the local Lua runner and execute the Lua-style traces. The local
-        runner uses pthread-backed lanes for true concurrent C traces. From
-        the repository root, this falls back to Docker when local Lua
-        development dependencies are missing.
-
-    make trace-smoke
-        Execute only the Lua traces that should pass on the starter.
-
-    make trace-list
-        Print the local autograder traces and point values as TSV.
-
-    make manifest-check
-        Compare traces/MANIFEST.tsv with the local autograder trace list.
-
-    make handout-check
-        Check that the handout has required files and no generated artifacts.
-
-    make starter-check
-        Check that the packaged starter has not grown solution code.
-
-Read GETTING_STARTED.md for the recommended local workflow, SCORING.md before
-treating a local score as meaningful, SFS_Lab_Writeup.md for the lab narrative,
-and local/OFFLINE_SELF_STUDY.md for the differences between this offline
-package and the course infrastructure.
+SCORING.md explains how to read the local score. traces/README.md describes
+the Lua-style trace catalog. The local score is a self-study signal, not an
+Autolab prediction.

@@ -1,15 +1,16 @@
 # Offline Self-Study Notes
 
-This directory is arranged to feel close to the CMU SFS handout while still
-being runnable without CMU infrastructure.
+The `sfslab/` directory is arranged to feel close to the CMU SFS handout while
+still being runnable without CMU infrastructure. These notes are kept outside
+the packaged handout so students see a smaller, assignment-style document set.
 
 ## What Matches the Handout Shape
 
 - `sfs-disk.c` is the student file.
 - `sfs-api.h`, `sfs-disk.h`, `sfs-support.c`, and `sfs-fsck.c` are provided
   support files.
-- `.clang-format`, `.gitignore`, `.labname.mk`, and `README` mirror the kind of
-  metadata present in a course handout.
+- `.clang-format`, `.gitignore`, `.labname.mk`, and `README` mirror the kind
+  of metadata present in a course handout.
 
 ## Local-Only Replacements
 

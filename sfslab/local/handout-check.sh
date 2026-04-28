@@ -5,7 +5,6 @@ missing=0
 for path in \
     Makefile \
     README \
-    GETTING_STARTED.md \
     SFS_Lab_Writeup.md \
     sfs-api.h \
     sfs-disk.c \
@@ -25,7 +24,6 @@ for path in \
     local/report-json.sh \
     local/run-lua-traces.sh \
     local/run-lua-with-fallback.sh \
-    local/OFFLINE_SELF_STUDY.md \
     SCORING.md \
     traces/README.md
 do
