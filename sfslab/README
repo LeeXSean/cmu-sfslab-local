@@ -8,10 +8,14 @@ This directory contains the files needed to work through the SFS lab. It is
 arranged as a handout-style working directory: start here, edit `sfs-disk.c`,
 and use the provided tools to test your work.
 
-Read SFS_Lab_Writeup.md for the lab narrative and API requirements. The file
-you edit is:
+Start here. For the normal student workflow, you only need this file,
+`SFS_Lab_Writeup.md`, `sfs-api.h`, and the file you edit:
 
     sfs-disk.c
+
+Repository-level `docs/` files, JSON schema notes, trace internals, and
+maintainer notes are optional background. You do not need them to complete the
+lab.
 
 Provided support files:
 
@@ -22,23 +26,31 @@ Provided support files:
 
 Suggested order:
 
-    1. Run `make check`.
-    2. Read the `sfs_getpos`, `sfs_seek`, and `sfs_rename` comments in
+    1. Run `make check` once to confirm the handout and tools are working.
+    2. Read `SFS_Lab_Writeup.md`.
+    3. Read the `sfs_getpos`, `sfs_seek`, and `sfs_rename` comments in
        `sfs-api.h`.
-    3. Work through Category A, then B, then C.
-    4. Run `make baseline` before treating performance scores as meaningful.
-    5. Tune performance only after correctness reaches 12/12.
+    4. Edit only `sfs-disk.c`.
+    5. Run `make test` after each change.
+    6. Work through Category A, then B, then C.
+    7. Tune performance only after correctness reaches 12/12.
 
-Useful make targets:
+Main test command:
 
-    make check        Run starter and trace health checks.
     make test         Run the local autograder.
-    make json         Print the local 22-point score as JSON.
-    make report-json  Print score plus diagnostic JSON.
-    make trace-smoke  Run Lua traces that should pass on the starter.
-    make grade        Recalibrate performance, then run the autograder.
+
+Setup and cleanup commands:
+
+    make check        Run once before starting, or when the handout looks broken.
     make clean        Remove generated files.
 
-SCORING.md explains how to read the local score. traces/README.md describes
-the Lua-style trace catalog. The local score is a self-study signal, not an
-Autolab prediction.
+Optional score details:
+
+    make json         Print the local 22-point score as JSON.
+
+The unmodified starter is expected to fail the full autograder because some
+functions are intentionally left for you to implement. `make check` passing
+means the package is healthy; `make test` is the command for your progress.
+
+SCORING.md explains how to read the local score if you want more detail. The
+local score is a self-study signal, not an Autolab prediction.

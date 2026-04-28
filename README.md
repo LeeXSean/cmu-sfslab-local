@@ -7,7 +7,20 @@ This is not an official CMU release. The goal is to keep the student-facing
 handout close to the course shape while replacing CMU-only infrastructure with
 local tools.
 
-## Quick Start
+## Who Should Read This
+
+Students should start inside the handout:
+
+```bash
+cd sfslab
+less README
+```
+
+The file to edit is `sfslab/sfs-disk.c`. The `docs/` directory is for local
+packaging notes, report schemas, examples, and maintainer workflows; it is not
+required for doing the lab.
+
+## Package Quick Start
 
 Run this inside Linux, WSL, or a Linux container:
 
@@ -17,7 +30,7 @@ cd sfslab
 make check
 ```
 
-Then read `README` and `SFS_Lab_Writeup.md` inside `sfslab/`.
+Then read `README` inside `sfslab/`.
 
 ## Useful Commands
 
@@ -54,10 +67,10 @@ sfslab-local-handout/
 
 Inside `sfslab/`, the main files are:
 
-- `README`: recommended self-study order and common commands.
+- `README`: student starting point and recommended work order.
 - `SFS_Lab_Writeup.md`: lab narrative.
-- `SCORING.md`: local score explanation.
-- `traces/`: executable Lua-style diagnostic traces.
+- `SCORING.md`: local score explanation, useful after you start testing.
+- `traces/`: executable Lua-style diagnostic traces, mostly for deeper checks.
 
 ## Starter Boundary
 
