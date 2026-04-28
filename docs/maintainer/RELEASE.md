@@ -2,8 +2,8 @@
 
 Use this checklist before publishing or handing off `sfslab-handout.tar`.
 
-Before running commands, review `docs/DISTRIBUTION_REVIEW.md`. This is a
-release-safety checklist, not legal advice.
+Before running commands, review `docs/maintainer/DISTRIBUTION_REVIEW.md`. This
+is a release-safety checklist, not legal advice.
 
 ```bash
 make doctor
@@ -69,10 +69,11 @@ If a second release is needed on the same date, add a numeric suffix such as
 ## Starter Boundary
 
 - `sfs_getpos`, `sfs_seek`, and `sfs_rename` remain intentionally incomplete.
-- Starter report remains comparable to `docs/examples/starter-report.json`.
+- Starter graded/core report fields remain comparable to
+  `docs/examples/starter-report.json`.
 
 ## Distribution Notes
 
-- `docs/DISTRIBUTION_REVIEW.md` reviewed.
+- `docs/maintainer/DISTRIBUTION_REVIEW.md` reviewed.
 - No completed `sfs-disk.c` solution included.
 ```

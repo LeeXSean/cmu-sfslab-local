@@ -36,7 +36,7 @@ not as assignment requirements.
 
 ## Core Next Work
 
-- Run `docs/RELEASE.md` before publishing a handout tarball.
+- Run `docs/maintainer/RELEASE.md` before publishing a handout tarball.
 - Keep `make lint-strict` in CI so shell scripts are ShellCheck-clean and the
   release toolchain includes clang-format. `make lint` may warn and skip
   optional tools on smaller local setups. Use `SFS_LINT_C_FORMAT_FILES` only for

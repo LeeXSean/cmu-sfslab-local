@@ -1,7 +1,7 @@
 # Distribution Review Checklist
 
-This checklist is for maintainers before publishing or sharing the handout
-tarball. It is not legal advice.
+This repository-only checklist is for maintainers before publishing or sharing
+the handout tarball. It is not legal advice.
 
 ## Project Boundary
 
