@@ -3,6 +3,9 @@
 `make report-json` emits one JSON document that combines the graded local
 autograder score with diagnostic trace and stress sections.
 
+See `docs/examples/starter-report.json` for the expected packaged-starter
+report shape.
+
 The command exits 0 when report generation succeeds, even if the starter or a
 student implementation fails graded traces. Use `make report-json-strict` when
 the process should fail on a non-passing graded score.

@@ -43,3 +43,11 @@ jobs:
 
       - name: Check dist reproducibility
         run: make dist-repro-check
+
+  docker-fallback:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Docker fallback trace smoke
+        run: make docker-trace-smoke

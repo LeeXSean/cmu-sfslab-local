@@ -66,9 +66,11 @@ SFS_LINT_C_FORMAT_FILES="local/test-report.c local/test-report.h" make lint-stri
 ```text
 cmu-sfslab-local/
   sfslab/              # handout-style working directory
+  docs/DISTRIBUTION_REVIEW.md # release boundary checklist
   docs/RELEASE.md      # release verification checklist
   docs/MAINTAINERS.md  # repo-only maintenance notes
   docs/report-schema.md # report-json field reference
+  docs/examples/starter-report.json # expected starter report example
   sfslab-handout.tar   # packaged copy of sfslab/
 ```
 
