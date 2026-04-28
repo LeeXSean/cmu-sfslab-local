@@ -24,6 +24,10 @@ the scored concurrency signal.
 Run `make trace-check` from the handout root to syntax-check these files when
 `luac` is installed. Run `make trace-smoke` to check the starter-safe traces,
 or `make trace-run` to execute the full catalog through the local Lua binding.
+Because the Lua C traces make real concurrent API calls, they are not part of
+the starter-safe subset; the starter intentionally leaves thread safety for the
+student implementation and the scored C autograder provides the stable starter
+signal.
 
 Run `make manifest-check` to compare `MANIFEST.tsv` with the local autograder's
 current trace list.
