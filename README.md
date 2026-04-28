@@ -1,4 +1,4 @@
-# cmu-sfslab-local
+# sfslab-local-handout
 
 Offline self-study packaging for CMU 15-213 / 15-513's Shark File System
 (SFS) lab.
@@ -43,7 +43,7 @@ sudo apt-get install build-essential make shellcheck clang-format pkg-config lua
 ## Project Layout
 
 ```text
-cmu-sfslab-local/
+sfslab-local-handout/
   sfslab/                 # handout-style working directory
   sfslab-handout.tar      # packaged copy of sfslab/
   docs/report-schema.md       # report-json field reference
