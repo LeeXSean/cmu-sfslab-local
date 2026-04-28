@@ -68,6 +68,7 @@ cmu-sfslab-local/
   sfslab/              # handout-style working directory
   docs/RELEASE.md      # release verification checklist
   docs/MAINTAINERS.md  # repo-only maintenance notes
+  docs/report-schema.md # report-json field reference
   sfslab-handout.tar   # packaged copy of sfslab/
 ```
 
