@@ -11,6 +11,9 @@ manifest=traces/MANIFEST.tsv
 listed=""
 if [ -f "$manifest" ]; then
     first=1
+    # The final purpose field is validated by the manifest shape but is not
+    # otherwise needed by this checker.
+    # shellcheck disable=SC2034
     while IFS="$(printf '\t')" read -r id category file starter_safe starter_status purpose; do
         if [ "$first" = 1 ]; then
             first=0

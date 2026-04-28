@@ -31,9 +31,9 @@ case "$mode" in
         ;;
 esac
 
-script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-handout_dir=$(CDPATH= cd -- "$script_dir/.." && pwd)
-repo_root=$(CDPATH= cd -- "$handout_dir/.." && pwd)
+script_dir=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+handout_dir=$(CDPATH='' cd -- "$script_dir/.." && pwd)
+repo_root=$(CDPATH='' cd -- "$handout_dir/.." && pwd)
 
 err=$(mktemp)
 trap 'rm -f "$err"' EXIT HUP INT TERM

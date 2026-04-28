@@ -10,6 +10,7 @@ RUN apt-get update && \
         lua5.4 \
         make \
         pkg-config \
+        shellcheck \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /work/sfslab

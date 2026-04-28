@@ -1,6 +1,24 @@
 #!/bin/sh
 set -u
 
+strict=0
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --strict)
+            strict=1
+            shift
+            ;;
+        --)
+            shift
+            break
+            ;;
+        *)
+            echo "report-json: unknown option: $1" >&2
+            exit 2
+            ;;
+    esac
+done
+
 grader_json=$(mktemp)
 grader_err=$(mktemp)
 trace_json=$(mktemp)
@@ -39,7 +57,7 @@ printf '  },\n'
 printf '  "official_style_traces": {\n'
 printf '    "available": %s,\n' "$trace_available"
 printf '    "exit_status": %d,\n' "$trace_status"
-if [ "$trace_available" = true ]; then
+if [ "$trace_available" = true ] && [ -s "$trace_json" ]; then
     printf '    "result": '
     sed '1s/^//; 2,$s/^/    /' "$trace_json"
     printf '\n'
@@ -77,4 +95,13 @@ fi
 printf '  }\n'
 printf '}\n'
 
-exit "$grader_status"
+if [ "$strict" -eq 1 ]; then
+    exit "$grader_status"
+fi
+
+if [ -s "$grader_json" ] && [ -s "$stress_json" ] &&
+   { [ "$trace_available" != true ] || [ -s "$trace_json" ]; }; then
+    exit 0
+fi
+
+exit 1

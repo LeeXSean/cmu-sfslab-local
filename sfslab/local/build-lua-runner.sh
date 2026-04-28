@@ -26,6 +26,8 @@ cflags=${CFLAGS:-"-std=c11 -O2 -g -pthread -Werror -Wall -Wextra -Wpedantic -Wco
 cppflags=${CPPFLAGS:-"-I. -D_GNU_SOURCE=1 -D_FORTIFY_SOURCE=2"}
 ldflags=${LDFLAGS:-"-O2 -g -pthread"}
 
+# The flag variables intentionally contain compiler-style word lists.
+# shellcheck disable=SC2046,SC2086
 $cc $cflags $cppflags $(pkg-config --cflags "$pkg") \
     -o lua-sfs-runner local/lua-sfs-runner.c sfs-disk.c sfs-support.c \
     $ldflags $(pkg-config --libs "$pkg")

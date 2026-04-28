@@ -64,6 +64,22 @@ report-json: test-sfs sfs-fsck
 	@sh local/report-json.sh
 .PHONY: report-json
 
+report-json-strict: test-sfs sfs-fsck
+	@sh local/report-json.sh --strict
+.PHONY: report-json-strict
+
+doctor:
+	@sh local/doctor.sh
+.PHONY: doctor
+
+lint:
+	@sh local/lint.sh
+.PHONY: lint
+
+lint-strict:
+	@sh local/lint.sh --strict
+.PHONY: lint-strict
+
 grade: test-sfs test-sfs-baseline sfs-fsck
 	$(MAKE) baseline
 	./test-sfs

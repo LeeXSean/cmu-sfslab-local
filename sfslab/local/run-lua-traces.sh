@@ -30,9 +30,13 @@ fi
 
 if [ "$#" -eq 0 ]; then
     if [ "$starter_safe" -eq 1 ]; then
+        # Manifest paths are controlled repository entries and become argv.
+        # shellcheck disable=SC2046
         set -- $(awk -F '\t' 'NR > 1 && $4 == "yes" { print $3 }' \
             traces/MANIFEST.tsv)
     else
+        # Trace paths are controlled repository entries and become argv.
+        # shellcheck disable=SC2046
         set -- $(find traces -type f -name '*.lua' | sort)
     fi
 fi

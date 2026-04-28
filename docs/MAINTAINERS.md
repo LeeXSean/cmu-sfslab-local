@@ -36,6 +36,19 @@ not as assignment requirements.
 
 ## Core Next Work
 
+- Run `docs/RELEASE.md` before publishing a handout tarball.
+- Keep `make lint-strict` in CI so shell scripts are ShellCheck-clean and the
+  release toolchain includes clang-format. `make lint` may warn and skip
+  optional tools on smaller local setups. Use `SFS_LINT_C_FORMAT_FILES` only for
+  C files that are intentionally clang-format clean; do not mass-format the
+  inherited handout sources without a deliberate review.
+- Keep `make report-json` useful for dashboards and humans: it should exit 0
+  when report generation succeeds, even if the starter or student solution has
+  failing graded traces. Use `make report-json-strict` when CI should fail on
+  the graded score.
+- Keep `make dist-verify` as the release gate that rebuilds, extracts, and
+  smoke-checks `sfslab-handout.tar`.
+- Keep `make dist-repro-check` passing so release tarballs remain reproducible.
 - Add more correctness traces before changing score weights.
 - Keep the local 22-point score contract frozen unless there is a deliberate
   scoring revision; new checks should usually be diagnostics.

@@ -23,6 +23,22 @@ json:
 report-json:
 	@$(MAKE) -s -C $(HANDOUT) report-json
 
+.PHONY: report-json-strict
+report-json-strict:
+	@$(MAKE) -s -C $(HANDOUT) report-json-strict
+
+.PHONY: lint
+lint:
+	$(MAKE) -C $(HANDOUT) lint
+
+.PHONY: lint-strict
+lint-strict:
+	$(MAKE) -C $(HANDOUT) lint-strict
+
+.PHONY: doctor
+doctor:
+	$(MAKE) -C $(HANDOUT) doctor
+
 .PHONY: grade
 grade:
 	$(MAKE) -C $(HANDOUT) grade
@@ -46,6 +62,20 @@ check:
 .PHONY: dist-check
 dist-check:
 	$(MAKE) -C $(HANDOUT) dist-check
+	@if [ -f "$(DIST)" ]; then \
+	  sh $(HANDOUT)/local/dist-verify.sh $(DIST); \
+	else \
+	  echo "dist-check: $(DIST) is missing; run 'make dist' first"; \
+	  exit 1; \
+	fi
+
+.PHONY: dist-verify
+dist-verify: dist
+	@sh $(HANDOUT)/local/dist-verify.sh $(DIST)
+
+.PHONY: dist-repro-check
+dist-repro-check:
+	@sh $(HANDOUT)/local/dist-repro-check.sh $(DIST)
 
 .PHONY: trace-check
 trace-check:

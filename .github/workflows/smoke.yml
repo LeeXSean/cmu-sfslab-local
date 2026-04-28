@@ -13,7 +13,13 @@ jobs:
       - name: Install trace tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y liblua5.4-dev lua5.4 pkg-config
+          sudo apt-get install -y clang-format liblua5.4-dev lua5.4 pkg-config shellcheck
+
+      - name: Check environment
+        run: make doctor
+
+      - name: Run lint
+        run: make lint-strict
 
       - name: Run development check
         run: make check
@@ -29,11 +35,11 @@ jobs:
 
       - name: Check JSON report
         run: |
-          make report-json > report.json || true
+          make report-json > report.json
           python3 -m json.tool report.json > /dev/null
 
-      - name: Build dist tarball
-        run: make dist
+      - name: Build and verify dist tarball
+        run: make dist-verify
 
-      - name: Check dist package
-        run: make dist-check
+      - name: Check dist reproducibility
+        run: make dist-repro-check

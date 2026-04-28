@@ -17,6 +17,10 @@ for path in \
     local/test-report.h \
     local/sfs-baseline-ref.c \
     local/build-lua-runner.sh \
+    local/dist-verify.sh \
+    local/dist-repro-check.sh \
+    local/doctor.sh \
+    local/lint.sh \
     local/lua-sfs-runner.c \
     local/report-json.sh \
     local/run-lua-traces.sh \
