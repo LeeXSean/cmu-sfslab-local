@@ -613,6 +613,11 @@ static int trace_B02(void)
           "read(-1) should return -EBADF");
     CHECK(sfs_write(-1, "x", 1) == -EBADF,
           "write(-1) should return -EBADF");
+    CHECK(sfs_read(32, buf, 1) == -EBADF,
+          "read(32) should return -EBADF");
+    CHECK(sfs_write(32, "x", 1) == -EBADF,
+          "write(32) should return -EBADF");
+    sfs_close(32);
 
     /* name too long */
     char longname[SFS_FILE_NAME_SIZE_LIMIT + 8];

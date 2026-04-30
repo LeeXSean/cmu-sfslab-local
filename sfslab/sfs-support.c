@@ -231,19 +231,8 @@ int sfs_unmount(void)
     if (diskBlocks == NULL)
         return 0;
 
-    /*for (int idx = 0; idx < OPEN_FILE_LIMIT; idx++)
-    {
-        if (openFileDescTable[idx] != NULL)
-        {
-            return -EBUSY;
-        }
-    }
-    // There are no live openFileDescTable entries. It _should_ be
-    // impossible for there to be any live openFileTable entries.
-    for (int idx = 0; (unsigned long)idx < FILE_COUNT_LIMIT; idx++)
-    {
-        assert(openFileTable[idx] == NULL);
-    }*/
+    if (sfs_has_open_files())
+        return -EBUSY;
 
     size_t diskSize = accessSuperBlock()->n_blocks * SFS_BLOCK_SIZE;
     // munmap could conceivably report an I/O error.  If it does,

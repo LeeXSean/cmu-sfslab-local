@@ -125,6 +125,7 @@ sfs_block_file_t *accessFileBlock(block_id id);
 block_id idOfBlock(const sfs_block_hdr_t *blk);
 sfs_filesystem_t *accessSuperBlock(void);
 int getSFSStatus(void);
+int sfs_has_open_files(void);
 void setBlockType(sfs_block_hdr_t *blk, const char *type);
 
 #endif

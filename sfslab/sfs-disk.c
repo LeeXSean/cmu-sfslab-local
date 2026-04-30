@@ -244,6 +244,23 @@ static int addOpenFileEntry(int entryIndex)
     return fd;
 }
 
+int sfs_has_open_files(void)
+{
+    for (int idx = 0; idx < OPEN_FILE_LIMIT; idx++)
+    {
+        if (openFileDescTable[idx] != NULL)
+            return 1;
+    }
+
+    // With no live descriptor entries, no per-file entries should remain.
+    for (int idx = 0; (unsigned long)idx < FILE_COUNT_LIMIT; idx++)
+    {
+        assert(openFileTable[idx] == NULL);
+    }
+
+    return 0;
+}
+
 /** Create a new file named 'fileName' and return an open-file-table
     entry for it.  'emptyIndex' is known to be a free slot in the
     directory on disk.  */
@@ -321,7 +338,7 @@ int sfs_open(const char *fileName)
 
 void sfs_close(int fd)
 {
-    if (fd < 0 || fd > OPEN_FILE_LIMIT)
+    if (fd < 0 || fd >= OPEN_FILE_LIMIT)
         return;
     sfs_mem_filedesc_t *tFile = openFileDescTable[fd];
     if (!tFile)
@@ -341,7 +358,7 @@ void sfs_close(int fd)
 
 ssize_t sfs_read(int fd, char *buf, size_t len)
 {
-    if (fd < 0 || fd > OPEN_FILE_LIMIT)
+    if (fd < 0 || fd >= OPEN_FILE_LIMIT)
         return -EBADF;
 
     sfs_mem_filedesc_t *tFile = openFileDescTable[fd];
@@ -406,7 +423,7 @@ ssize_t sfs_read(int fd, char *buf, size_t len)
 
 ssize_t sfs_write(int fd, const char *buf, size_t len)
 {
-    if (fd < 0 || fd > OPEN_FILE_LIMIT)
+    if (fd < 0 || fd >= OPEN_FILE_LIMIT)
         return -EBADF;
 
     sfs_mem_filedesc_t *tFile = openFileDescTable[fd];
@@ -512,7 +529,8 @@ int sfs_remove(const char *name)
 {
     // Can only have 23 characters, because the string on disk is NUL
     // terminated.
-    if (strlen(name) + 1 > SFS_FILE_NAME_SIZE_LIMIT)
+    if (strnlen(name, SFS_FILE_NAME_SIZE_LIMIT + 1) + 1 >
+        SFS_FILE_NAME_SIZE_LIMIT)
         return -ENAMETOOLONG;
 
     // Is a disk image available?

@@ -251,6 +251,30 @@ static int addOpenFileEntry(int entryIndex)
     return fd;
 }
 
+int sfs_has_open_files(void)
+{
+    BASELINE_LOCK();
+
+    int rv = 0;
+    for (int idx = 0; idx < OPEN_FILE_LIMIT; idx++)
+    {
+        if (openFileDescTable[idx] != NULL) {
+            rv = 1;
+            goto out;
+        }
+    }
+
+    // With no live descriptor entries, no per-file entries should remain.
+    for (int idx = 0; (unsigned long)idx < FILE_COUNT_LIMIT; idx++)
+    {
+        assert(openFileTable[idx] == NULL);
+    }
+
+out:
+    BASELINE_UNLOCK();
+    return rv;
+}
+
 /** Create a new file named 'fileName' and return an open-file-table
     entry for it.  'emptyIndex' is known to be a free slot in the
     directory on disk.  */
@@ -342,7 +366,7 @@ out:
 void sfs_close(int fd)
 {
     BASELINE_LOCK();
-    if (fd < 0 || fd > OPEN_FILE_LIMIT) {
+    if (fd < 0 || fd >= OPEN_FILE_LIMIT) {
         BASELINE_UNLOCK();
         return;
     }
@@ -372,7 +396,7 @@ ssize_t sfs_read(int fd, char *buf, size_t len)
     BASELINE_LOCK();
     ssize_t rv;
 
-    if (fd < 0 || fd > OPEN_FILE_LIMIT) {
+    if (fd < 0 || fd >= OPEN_FILE_LIMIT) {
         rv = -EBADF;
         goto out;
     }
@@ -447,7 +471,7 @@ ssize_t sfs_write(int fd, const char *buf, size_t len)
     BASELINE_LOCK();
     ssize_t rv;
 
-    if (fd < 0 || fd > OPEN_FILE_LIMIT) {
+    if (fd < 0 || fd >= OPEN_FILE_LIMIT) {
         rv = -EBADF;
         goto out;
     }
@@ -571,7 +595,8 @@ int sfs_remove(const char *name)
 
     // Can only have 23 characters, because the string on disk is NUL
     // terminated.
-    if (strlen(name) + 1 > SFS_FILE_NAME_SIZE_LIMIT) {
+    if (strnlen(name, SFS_FILE_NAME_SIZE_LIMIT + 1) + 1 >
+        SFS_FILE_NAME_SIZE_LIMIT) {
         rv = -ENAMETOOLONG;
         goto out;
     }
