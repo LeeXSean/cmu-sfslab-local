@@ -30,13 +30,18 @@ the handout tarball. It is not legal advice.
 
 ## Verification
 
-- Run `make dist-verify`.
-- Run `make dist-repro-check`.
+- Run the maintainer release checks from `docs/maintainer/RELEASE.md`, including
+  `make dist-verify`, `make dist-repro-check`, the compare helper unit test, the
+  committed-tarball diff check, and the clean-worktree gate.
 - Compare the fresh starter report's graded/core fields with the stored
   example:
   ```bash
-  make report-json > /tmp/starter-report.json
-  python3 docs/examples/compare-starter-report.py docs/examples/starter-report.json /tmp/starter-report.json
+  make report-json > /tmp/sfslab-report.json
+  python3 -m json.tool /tmp/sfslab-report.json >/dev/null
+  python3 docs/examples/compare-starter-report.py docs/examples/starter-report.json /tmp/sfslab-report.json
+  python3 docs/examples/test_compare_starter_report.py
+  git diff --exit-code -- sfslab-handout.tar
+  test -z "$(git status --porcelain=v1 --untracked-files=all)"
   ```
 - Do not require diagnostic sections to match exactly. Lua trace availability
   changes depending on whether local Lua development packages are installed.

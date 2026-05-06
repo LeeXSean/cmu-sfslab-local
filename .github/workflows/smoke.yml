@@ -26,8 +26,8 @@ jobs:
 
       - name: Check after score artifacts
         run: |
-          make json > score.json || true
-          python3 -m json.tool score.json > /dev/null
+          make json > /tmp/sfslab-score.json || true
+          python3 -m json.tool /tmp/sfslab-score.json > /dev/null
           make check
 
       - name: Run Lua trace smoke
@@ -35,15 +35,27 @@ jobs:
 
       - name: Check JSON report
         run: |
-          make report-json > report.json
-          python3 -m json.tool report.json > /dev/null
-          python3 docs/examples/compare-starter-report.py docs/examples/starter-report.json report.json
+          make report-json > /tmp/sfslab-report.json
+          python3 -m json.tool /tmp/sfslab-report.json > /dev/null
+          python3 docs/examples/compare-starter-report.py docs/examples/starter-report.json /tmp/sfslab-report.json
+
+      - name: Test report comparison helper
+        run: python3 docs/examples/test_compare_starter_report.py
 
       - name: Build and verify dist tarball
         run: make dist-verify
 
       - name: Check dist reproducibility
         run: make dist-repro-check
+
+      - name: Check release artifact and worktree cleanliness
+        run: |
+          git diff --exit-code -- sfslab-handout.tar
+          status="$(git status --porcelain=v1 --untracked-files=all)"
+          if [ -n "$status" ]; then
+            printf '%s\n' "$status"
+            exit 1
+          fi
 
   docker-fallback:
     runs-on: ubuntu-latest

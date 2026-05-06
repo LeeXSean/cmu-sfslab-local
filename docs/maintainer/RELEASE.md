@@ -3,7 +3,10 @@
 Use this checklist before publishing or handing off `sfslab-handout.tar`.
 
 Before running commands, review `docs/maintainer/DISTRIBUTION_REVIEW.md`. This
-is a release-safety checklist, not legal advice.
+is a release-safety checklist, not legal advice. Run it from a clean worktree:
+the dist targets may rewrite `sfslab-handout.tar`, and the final `git diff` /
+clean-worktree gates are the authoritative stale-artifact checks in this
+sequence.
 
 ```bash
 make doctor
@@ -11,19 +14,24 @@ make lint-strict
 make clean
 make check
 make trace-smoke
-make report-json > /tmp/starter-report.json
-python3 docs/examples/compare-starter-report.py docs/examples/starter-report.json /tmp/starter-report.json
+make report-json > /tmp/sfslab-report.json
+python3 -m json.tool /tmp/sfslab-report.json >/dev/null
+python3 docs/examples/compare-starter-report.py docs/examples/starter-report.json /tmp/sfslab-report.json
+python3 docs/examples/test_compare_starter_report.py
 make dist-verify
 make dist-repro-check
+git diff --exit-code -- sfslab-handout.tar
+test -z "$(git status --porcelain=v1 --untracked-files=all)"
 ```
 
 `make dist-verify` rebuilds `sfslab-handout.tar`, extracts it into a temporary
 directory, runs `make check` from the extracted handout, and validates that
 `make report-json` emits parseable JSON.
 
-`make dist-repro-check` rebuilds the tarball twice and compares SHA-256 hashes.
-If it fails, the release artifact is carrying unstable metadata or generated
-contents.
+`make dist-repro-check` first checks the existing published tarball against a
+fresh `make dist` result, then rebuilds the tarball a second time and compares
+the two fresh SHA-256 hashes. The final `git diff` and clean-worktree gates catch
+a stale committed tarball even when the rebuild itself is reproducible.
 
 Expected starter status:
 
@@ -37,6 +45,7 @@ Expected starter status:
   fully graded.
 - `docs/examples/compare-starter-report.py` accepts the starter report's
   graded/core fields even when environment-dependent diagnostics differ.
+- `docs/examples/test_compare_starter_report.py` passes.
 - `sfs_getpos`, `sfs_seek`, and `sfs_rename` remain `-ENOSYS` stubs.
 
 ## Version Tags
@@ -65,10 +74,14 @@ If a second release is needed on the same date, add a numeric suffix such as
 - `make lint-strict`
 - `make check`
 - `make trace-smoke`
-- `make report-json > /tmp/starter-report.json`
-- `python3 docs/examples/compare-starter-report.py docs/examples/starter-report.json /tmp/starter-report.json`
+- `make report-json > /tmp/sfslab-report.json`
+- `python3 -m json.tool /tmp/sfslab-report.json >/dev/null`
+- `python3 docs/examples/compare-starter-report.py docs/examples/starter-report.json /tmp/sfslab-report.json`
+- `python3 docs/examples/test_compare_starter_report.py`
 - `make dist-verify`
 - `make dist-repro-check`
+- `git diff --exit-code -- sfslab-handout.tar`
+- `test -z "$(git status --porcelain=v1 --untracked-files=all)"`
 
 ## Starter Boundary
 

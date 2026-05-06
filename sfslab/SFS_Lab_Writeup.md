@@ -64,8 +64,8 @@ This produces three executables:
 - `test-sfs` -- test driver for your implementation
 - `test-sfs-baseline` -- reference implementation (handout code + one global mutex) used to calibrate the perf score for your machine; see Section 5.1.
 
-Before running the autograder for the first time on a new machine, calibrate
-the performance baseline:
+Before evaluating the performance score on a new machine, calibrate the
+performance baseline:
 
 ```bash
 make baseline
@@ -80,11 +80,13 @@ an idle system. Override the sample count with `make baseline BASELINE_RUNS=N`
 (odd N recommended).
 
 Your perf score is then a ratio of your implementation's throughput to this
-baseline, so results are comparable across laptops.
+baseline, so results are comparable across laptops. You can defer this until
+the A/B/C correctness tests pass; it is not needed for the starter health check.
 
 ### 2.3 Running Tests
 
-Assuming you have already run `make` and `make baseline` (Section 2.2):
+Assuming you have already run `make` (and `make baseline` before checking
+performance):
 
 ```bash
 ./test-sfs
@@ -231,7 +233,7 @@ grading structure. It runs categorized test traces and prints a scoreboard:
 
 ```bash
 make              # builds sfs-fsck, test-sfs, test-sfs-baseline
-make baseline     # one-time per-machine perf calibration (see Section 2.2)
+make baseline     # before checking the perf score; see Section 2.2
 ./test-sfs
 ```
 
